@@ -1,0 +1,128 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+const slides = [
+  {
+    color: "bg-purple-300",
+    title: "Colabora y aprende",
+    description:
+      "Comparte evaluaciones, comentarios y resultados con tu equipo en un mismo espacio de trabajo.",
+  },
+  {
+    color: "bg-violet-300",
+    title: "Aprende con datos",
+    description:
+      "Analiza el progreso de cada persona y detecta oportunidades de mejora a tiempo.",
+  },
+  {
+    color: "bg-indigo-300",
+    title: "Crece a tu ritmo",
+    description:
+      "Evaluaciones y contenidos adaptados a las necesidades de cada estudiante.",
+  },
+];
+
+export default function Carousel() {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [activeSlide]);
+
+  const slide = slides[activeSlide];
+
+  return (
+    <section className="relative hidden w-[40%] overflow-hidden bg-purple-950 lg:block">
+      {slides.map((item, index) => (
+        <div
+          key={item.title}
+          aria-hidden={index !== activeSlide}
+          className={`absolute inset-0 ${item.color} ${index === activeSlide ? "opacity-100" : "opacity-0"
+            }`}
+        />
+      ))}
+
+      <div className="relative z-10 flex h-full w-full flex-col p-12 text-black">
+        <div className="flex flex-1 flex-col justify-center">
+          <div
+            key={activeSlide}
+            className="animate-fade-in flex flex-col items-start"
+          >
+            <h2 className="max-w-md text-6xl mb-6 font-semibold leading-tight tracking-tight">
+              {slide.title}
+            </h2>
+            <p className="mt-4 max-w-md text-xl leading-7 text-black/80">
+              {slide.description}
+            </p>
+          </div>
+
+          <div className="mt-24 flex w-full items-center justify-between gap-6">
+            <button
+              type="button"
+              onClick={() =>
+                setActiveSlide(
+                  (current) => (current - 1 + slides.length) % slides.length,
+                )
+              }
+              aria-label="Diapositiva anterior"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-purple-950/20 text-purple-950/70 transition hover:border-purple-950/50 hover:text-purple-950"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-2">
+              {slides.map((item, index) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => setActiveSlide(index)}
+                  aria-label={`Ir a la diapositiva ${index + 1}: ${item.title}`}
+                  aria-current={index === activeSlide}
+                  className={`h-2 rounded-full transition-all ${index === activeSlide
+                    ? "w-8 bg-purple-950"
+                    : "w-2 bg-purple-950/30 hover:bg-purple-950/50"
+                    }`}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setActiveSlide((current) => (current + 1) % slides.length)
+              }
+              aria-label="Diapositiva siguiente"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-purple-950/20 text-purple-950/70 transition hover:border-purple-950/50 hover:text-purple-950"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
