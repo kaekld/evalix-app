@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import RoleSelector, { type Role } from "./RoleSelector";
+import RegisterModal from "./RegisterModal";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<Role>("alumno");
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   return (
     <section className="relative flex w-full flex-col justify-center px-6 py-12 lg:w-[60%] lg:px-16">
@@ -76,11 +78,27 @@ export default function LoginForm() {
 
           <button
             type="submit"
-            className="flex h-12 w-full items-center justify-center rounded-lg bg-[#6543AB] text-base font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+            className="flex h-12 w-full items-center justify-center rounded-lg bg-[#6543AB] text-base font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer"
           >
             Iniciar sesión
           </button>
+
+          <p className="mt-6 text-center text-base text-zinc-500">
+            ¿No tienes cuenta?{" "}
+            <button
+              type="button"
+              onClick={() => setShowRegisterModal(true)}
+              className="font-medium text-zinc-900 hover:underline cursor-pointer"
+            >
+              Regístrate
+            </button>
+          </p>
         </form>
+
+        <RegisterModal
+          isOpen={showRegisterModal}
+          onClose={() => setShowRegisterModal(false)}
+        />
       </div>
     </section>
   );
