@@ -15,9 +15,6 @@ const roles: { value: Role; label: string }[] = [
 export default function RoleSelector({ role, onChange }: RoleSelectorProps) {
   return (
     <div className="space-y-2">
-      <span className="block text-base font-medium text-zinc-700">
-        Iniciar sesión como
-      </span>
       <div className="grid grid-cols-2 gap-2 rounded-lg bg-zinc-100 p-1">
         {roles.map((item) => (
           <button
