@@ -1,14 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f6fa;
+  --foreground: #232334;
+  --color-primary: #6543ab;
+  --color-primary-light: #f0eafb;
+  --color-text-primary: #232334;
+  --color-text-secondary: #747487;
+  --color-border: #dedee8;
+  --color-card-bg: #ffffff;
+  --color-exam-card-bg: #e4f7fb;
+  --color-exam-btn-bg: #44689e;
+  --color-group-accent: #95c9a4;
+  --color-user-btn-bg: #f6f6fa;
+  --color-nav-active: #f0eafb;
+  --color-divider: #dedee8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-border: var(--color-border);
+  --color-card-bg: var(--color-card-bg);
+  --color-exam-card-bg: var(--color-exam-card-bg);
+  --color-exam-btn-bg: var(--color-exam-btn-bg);
+  --color-group-accent: var(--color-group-accent);
+  --color-user-btn-bg: var(--color-user-btn-bg);
+  --color-nav-active: var(--color-nav-active);
+  --color-divider: var(--color-divider);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 

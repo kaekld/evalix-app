@@ -22,7 +22,7 @@ export default function RoleSelector({ role, onChange }: RoleSelectorProps) {
             type="button"
             onClick={() => onChange(item.value)}
             aria-pressed={role === item.value}
-            className={`h-10 rounded-md text-base font-medium transition ${role === item.value
+            className={`h-10 rounded-md text-base font-medium cursor-pointer transition ${role === item.value
               ? "bg-white text-zinc-900 shadow-sm"
               : "text-zinc-500 hover:text-zinc-700"
               }`}
