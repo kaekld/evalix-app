@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface Exam {
   id: number;
@@ -81,12 +82,12 @@ export default function AlumnoInicioPage() {
 
             {/* Center: Tabs */}
             <nav className="hidden lg:flex items-center gap-2">
-              <button className="px-4 h-10 rounded-lg bg-[#f0eafb] font-semibold text-base leading-relaxed text-[#6543ab]">
+              <Link href="/alumno/inicio" className="px-4 h-10 rounded-lg bg-[#f0eafb] font-semibold text-base leading-relaxed text-[#6543ab] flex items-center justify-center">
                 Inicio
-              </button>
-              <button className="px-4 h-10 rounded-lg font-medium text-base leading-relaxed text-[#747487] hover:bg-[#f6f6fa] transition-colors">
+              </Link>
+              <Link href="/alumno/examenes" className="px-4 h-10 rounded-lg font-medium text-base leading-relaxed text-[#747487] hover:bg-[#f6f6fa] transition-colors flex items-center justify-center">
                 Exámenes
-              </button>
+              </Link>
             </nav>
 
             {/* Right: Mi cuenta button */}
