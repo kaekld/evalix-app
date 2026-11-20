@@ -66,7 +66,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           <X className="h-5 w-5 cursor-pointer" />
         </button>
 
-        <h2 className="text-3xl font-bold text-center text-zinc-900">CREAR CUENTA</h2>
+        <h2 className="text-3xl font-bold text-center text-zinc-900 mt-5">CREAR CUENTA</h2>
         <p className="mt-2 text-center text-zinc-500">
           Completa tus datos para registrarte
         </p>
