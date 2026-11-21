@@ -9,7 +9,7 @@ type RegisterModalProps = {
   onClose: () => void;
 };
 
-type Role = "alumno" | "docente" | "administrador";
+type Role = "alumno" | "docente";
 
 type Institucion = {
   id: string;
@@ -172,19 +172,17 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {/* Role Selector */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-700">Rol</label>
             <div className="flex gap-2">
-              {(["alumno", "docente", "administrador"] as Role[]).map((r) => (
+              {(["alumno", "docente"] as Role[]).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => handleRoleChange(r)}
                   disabled={isLoading}
-                  className={`flex-1 h-10 rounded-lg border text-sm font-medium transition ${
-                    role === r
+                  className={`flex-1 h-10 rounded-lg border text-sm font-medium transition ${role === r
                       ? "bg-[#6543AB] border-[#6543AB] text-white"
                       : "border-zinc-200 text-zinc-700 hover:border-zinc-400"
-                  } disabled:opacity-50`}
+                    } disabled:opacity-50`}
                 >
                   {r.charAt(0).toUpperCase() + r.slice(1)}
                 </button>
@@ -275,7 +273,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 <option value="">Selecciona tu institución</option>
                 {instituciones.map((inst) => (
                   <option key={inst.id} value={inst.id}>
-                    {inst.nombre} (@{inst.dominio})
+                    {inst.nombre}
                   </option>
                 ))}
               </select>

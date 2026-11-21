@@ -51,7 +51,11 @@ export async function POST(req: Request) {
     }
 
     const rolNormalizado = role.toUpperCase();
-    if (!['ALUMNO', 'DOCENTE', 'ADMINISTRADOR'].includes(rolNormalizado)) {
+    // No permitir registro de administradores desde el formulario público
+    if (rolNormalizado === 'ADMINISTRADOR') {
+      return NextResponse.json({ message: 'No está permitido registrar administradores' }, { status: 403 });
+    }
+    if (!['ALUMNO', 'DOCENTE'].includes(rolNormalizado)) {
       return NextResponse.json({ message: 'Rol inválido' }, { status: 400 });
     }
 
