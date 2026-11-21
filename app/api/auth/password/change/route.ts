@@ -3,14 +3,13 @@ import bcrypt from 'bcryptjs';
 import { jwtVerify } from 'jose';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'evalix_secret_key_2026');
 
 export async function PUT(req: Request) {
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
