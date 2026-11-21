@@ -114,7 +114,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
       onClose();
       // Redirigir según el rol
-      const redirectPath = role === "docente" ? "/docente" : role === "administrador" ? "/administrador" : "/alumno";
+      const redirectPath = role === "docente" ? "/docente" : "/alumno";
       router.push(redirectPath);
       router.refresh();
     } catch {
@@ -172,7 +172,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           {/* Role Selector */}
           <div className="space-y-2">
             <div className="flex gap-2">
-              {(["alumno", "docente", "administrador"] as Role[]).map((r) => (
+              {(["alumno", "docente"] as Role[]).map((r) => (
                 <button
                   key={r}
                   type="button"

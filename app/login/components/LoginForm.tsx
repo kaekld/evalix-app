@@ -39,7 +39,7 @@ export default function LoginForm() {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       // Redirigir según el rol
-      const redirectPath = role === "docente" ? "/docente" : role === "administrador" ? "/administrador" : "/alumno";
+      const redirectPath = role === "docente" ? "/docente" : "/alumno";
       router.push(redirectPath);
       router.refresh();
     } catch {
