@@ -142,7 +142,7 @@ function PerfilModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-4xl rounded-xl bg-white p-8 shadow-xl max-h-[95vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -351,7 +351,7 @@ function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      <div className="relative w-full max-w-4xl rounded-xl bg-white p-8 shadow-xl max-h-[95vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
