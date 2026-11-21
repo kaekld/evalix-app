@@ -37,7 +37,7 @@ export default function Carousel() {
   const slide = slides[activeSlide];
 
   return (
-    <section className="relative hidden w-[40%] bg-purple-950 lg:block">
+    <section className="relative hidden w-2/5 bg-purple-950 lg:block">
       {/* Background slides with overflow hidden */}
       <div className="absolute inset-0 overflow-hidden">
         {slides.map((item, index) => (

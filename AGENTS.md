@@ -28,3 +28,9 @@ Retain qualifying friction even if it is later fixed or worked around; record th
 Before the final response, run one reporting pass. If candidates remain, from this file's directory run `npx --no-install next internal agent-feedback-instructions` once without piping or truncating its output. Follow its output or error guidance. If a network sandbox blocks it, retry with network access; if it still returns no output, continue normally.
 
 <!-- END:nextjs-agent-feedback -->
+
+# Reglas de Arquitectura y Componentización (Next.js)
+- NUNCA escribas interfaces complejas directamente dentro de `app/**/page.tsx`. Los archivos `page.tsx` deben funcionar solo como ensambladores de layout y obtención de datos (Server Components).
+- Todo bloque de UI reutilizable o sección independiente debe extraerse a `src/components/` (o `components/`).
+- Si un componente supera las 120 líneas de código o maneja más de una responsabilidad, divídelo inmediatamente en subcomponentes atómicos.
+- Separa la lógica interactiva (`"use client"`) en componentes hoja pequeños para mantener las páginas principales como Server Components.

@@ -50,7 +50,7 @@ export default function LoginForm() {
   };
 
   return (
-    <section className="relative flex w-full flex-col justify-center px-6 py-12 lg:w-[60%] lg:px-16">
+    <section className="relative flex w-full flex-col justify-center px-6 py-12 lg:w-3/5 lg:px-16">
       <div className="mx-auto w-full max-w-md">
         <h1 className="text-5xl font-bold text-center tracking-tight text-zinc-900">
           INICIAR SESIÓN
