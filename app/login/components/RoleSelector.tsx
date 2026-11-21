@@ -1,6 +1,6 @@
 "use client";
 
-export type Role = "alumno" | "docente";
+export type Role = "alumno" | "docente" | "administrador";
 
 type RoleSelectorProps = {
   role: Role;
@@ -10,6 +10,7 @@ type RoleSelectorProps = {
 const roles: { value: Role; label: string }[] = [
   { value: "alumno", label: "Alumno" },
   { value: "docente", label: "Docente" },
+  { value: "administrador", label: "Administrador" },
 ];
 
 export default function RoleSelector({ role, onChange }: RoleSelectorProps) {

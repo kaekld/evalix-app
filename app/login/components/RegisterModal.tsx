@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { type Role } from "./RoleSelector";
 
 type RegisterModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
-type Role = "alumno" | "docente";
 
 type Institucion = {
   id: string;
@@ -173,7 +172,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           {/* Role Selector */}
           <div className="space-y-2">
             <div className="flex gap-2">
-              {(["alumno", "docente"] as Role[]).map((r) => (
+              {(["alumno", "docente", "administrador"] as Role[]).map((r) => (
                 <button
                   key={r}
                   type="button"
