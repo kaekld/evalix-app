@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 interface Exam {
   id: number;
@@ -18,6 +20,15 @@ interface Group {
   students: string;
   exams: Exam[];
   expanded: boolean;
+}
+
+interface User {
+  id: string;
+  nombre_completo: string;
+  correo: string;
+  institucion: string | null;
+  institucion_id: string | null;
+  rol: string;
 }
 
 const groupsData: Group[] = [
@@ -44,9 +55,473 @@ const groupsData: Group[] = [
   },
 ];
 
+// Modal Mi Perfil
+function PerfilModal({ isOpen, onClose, user }: { isOpen: boolean; onClose: () => void; user: User | null }) {
+  const [formData, setFormData] = useState({
+    nombre_completo: user?.nombre_completo || "",
+    correo: user?.correo || "",
+    institucion: user?.institucion || "",
+  });
+  const [errors, setErrors] = useState<Partial<typeof formData>>({});
+  const [apiError, setApiError] = useState("");
+  const [apiSuccess, setApiSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      setFormData({
+        nombre_completo: user.nombre_completo || "",
+        correo: user.correo || "",
+        institucion: user.institucion || "",
+      });
+      setErrors({});
+      setApiError("");
+      setApiSuccess("");
+    }
+  }, [isOpen, user]);
+
+  if (!isOpen) return null;
+
+  const validateForm = () => {
+    const newErrors: Partial<typeof formData> = {};
+    if (!formData.nombre_completo.trim()) newErrors.nombre_completo = "Nombre completo es requerido";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError("");
+    setApiSuccess("");
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/api/auth/profile/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre_completo: formData.nombre_completo,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApiError(data.message || "Error al actualizar perfil");
+        return;
+      }
+
+      // Actualizar localStorage
+      const updatedUser = { ...user!, ...data.user };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setApiSuccess("Perfil actualizado correctamente");
+      
+      // Refrescar datos del usuario en el padre
+      window.dispatchEvent(new CustomEvent("user-updated", { detail: updatedUser }));
+    } catch {
+      setApiError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    if (apiError) setApiError("");
+    if (apiSuccess) setApiSuccess("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isLoading}
+          className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 transition disabled:opacity-50"
+          aria-label="Cerrar modal"
+        >
+          <X className="h-5 w-5 cursor-pointer" />
+        </button>
+
+        <h2 className="text-3xl font-bold text-center text-zinc-900 mt-5">MI PERFIL</h2>
+        <p className="mt-2 text-center text-zinc-500">
+          Gestiona tu información personal
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {apiError && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center" role="alert">
+              {apiError}
+            </div>
+          )}
+          {apiSuccess && (
+            <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center" role="alert">
+              {apiSuccess}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label
+              htmlFor="nombre_completo"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Nombre completo
+            </label>
+            <input
+              id="nombre_completo"
+              name="nombre_completo"
+              type="text"
+              autoComplete="name"
+              placeholder="Juan Pérez García"
+              value={formData.nombre_completo}
+              onChange={handleChange}
+              disabled={isLoading}
+              className={`h-11 w-full rounded-lg border bg-white px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.nombre_completo
+                ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
+                : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                } disabled:bg-zinc-50`}
+            />
+            {errors.nombre_completo && (
+              <p className="text-sm text-red-500">{errors.nombre_completo}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="correo"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Correo electrónico
+            </label>
+            <input
+              id="correo"
+              name="correo"
+              type="email"
+              autoComplete="email"
+              placeholder="juan.perez@institucion.com"
+              value={formData.correo}
+              disabled
+              className="h-11 w-full rounded-lg border bg-zinc-50 px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 border-zinc-200 cursor-not-allowed"
+            />
+            <p className="text-xs text-zinc-400">El correo no se puede modificar</p>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="institucion"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Institución
+            </label>
+            <input
+              id="institucion"
+              name="institucion"
+              type="text"
+              autoComplete="organization"
+              placeholder="Universidad Ejemplo"
+              value={formData.institucion}
+              disabled
+              className="h-11 w-full rounded-lg border bg-zinc-50 px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 border-zinc-200 cursor-not-allowed"
+            />
+            <p className="text-xs text-zinc-400">La institución no se puede modificar</p>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 h-11 rounded-lg border border-zinc-200 bg-white font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 h-11 items-center justify-center rounded-lg bg-[#6543AB] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Modal Cambiar Contraseña
+function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState<Partial<typeof formData>>({});
+  const [apiError, setApiError] = useState("");
+  const [apiSuccess, setApiSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setErrors({});
+      setApiError("");
+      setApiSuccess("");
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const validateForm = () => {
+    const newErrors: Partial<typeof formData> = {};
+    if (!formData.currentPassword) newErrors.currentPassword = "Contraseña actual es requerida";
+    if (!formData.newPassword) newErrors.newPassword = "Nueva contraseña es requerida";
+    else if (formData.newPassword.length < 8) newErrors.newPassword = "Mínimo 8 caracteres";
+    if (formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError("");
+    setApiSuccess("");
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/api/auth/password/change", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setApiError(data.message || "Error al cambiar contraseña");
+        return;
+      }
+
+      setApiSuccess("Contraseña cambiada correctamente. Inicia sesión de nuevo.");
+      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      
+      // Cerrar sesión automáticamente por seguridad
+      setTimeout(() => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }, 2000);
+    } catch {
+      setApiError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+    if (apiError) setApiError("");
+    if (apiSuccess) setApiSuccess("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isLoading}
+          className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 transition disabled:opacity-50"
+          aria-label="Cerrar modal"
+        >
+          <X className="h-5 w-5 cursor-pointer" />
+        </button>
+
+        <h2 className="text-3xl font-bold text-center text-zinc-900 mt-5">CAMBIAR CONTRASEÑA</h2>
+        <p className="mt-2 text-center text-zinc-500">
+          Ingresa tu contraseña actual y la nueva
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {apiError && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center" role="alert">
+              {apiError}
+            </div>
+          )}
+          {apiSuccess && (
+            <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center" role="alert">
+              {apiSuccess}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label
+              htmlFor="currentPassword"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Contraseña actual
+            </label>
+            <div className="relative">
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                value={formData.currentPassword}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`h-11 w-full rounded-lg border bg-white pl-4 pr-12 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.currentPassword
+                  ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
+                  : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                  } disabled:bg-zinc-50`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition cursor-pointer disabled:opacity-50"
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
+            {errors.currentPassword && <p className="text-sm text-red-500">{errors.currentPassword}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="newPassword"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Nueva contraseña
+            </label>
+            <div className="relative">
+              <input
+                id="newPassword"
+                name="newPassword"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={formData.newPassword}
+                onChange={handleChange}
+                disabled={isLoading}
+                className={`h-11 w-full rounded-lg border bg-white pl-4 pr-12 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.newPassword
+                  ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
+                  : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                  } disabled:bg-zinc-50`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition cursor-pointer disabled:opacity-50"
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
+            {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-zinc-700"
+            >
+              Confirmar nueva contraseña
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              disabled={isLoading}
+              className={`h-11 w-full rounded-lg border bg-white px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.confirmPassword
+                ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
+                : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+                } disabled:bg-zinc-50`}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 h-11 rounded-lg border border-zinc-200 bg-white font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 h-11 items-center justify-center rounded-lg bg-[#6543AB] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Cambiando..." : "Cambiar contraseña"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AlumnoInicioPage() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [groups, setGroups] = useState<Group[]>(groupsData);
+  const [user, setUser] = useState<User | null>(null);
+  const [showPerfilModal, setShowPerfilModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Cargar usuario desde localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+    }
+
+    // Escuchar actualizaciones de usuario desde los modales
+    const handleUserUpdated = (e: CustomEvent<User>) => {
+      setUser(e.detail);
+    };
+    window.addEventListener("user-updated", handleUserUpdated as EventListener);
+    return () => window.removeEventListener("user-updated", handleUserUpdated as EventListener);
+  }, []);
 
   const toggleGroup = (groupId: number) => {
     setGroups(groups.map((g) =>
@@ -56,12 +531,27 @@ export default function AlumnoInicioPage() {
 
   const getSortedExams = (exams: Exam[]) => {
     return [...exams].sort((a, b) => {
-      // Upcoming first
       if (a.status === "upcoming" && b.status === "completed") return -1;
       if (a.status === "completed" && b.status === "upcoming") return 1;
-      // For completed, most recent first (by date)
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    router.push("/login");
+    router.refresh();
+  };
+
+  const handleProfile = () => {
+    setUserMenuOpen(false);
+    setShowPerfilModal(true);
+  };
+
+  const handleChangePassword = () => {
+    setUserMenuOpen(false);
+    setShowPasswordModal(true);
   };
 
   return (
@@ -105,22 +595,28 @@ export default function AlumnoInicioPage() {
                   <div className="fixed inset-0 z-30" onClick={() => setUserMenuOpen(false)} />
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg border border-[#dedee8] shadow-lg py-1 z-40">
                     <div className="px-4 py-3 border-b border-[#dedee8]">
-                      <p className="text-sm font-medium text-[#232334]">Carlos Rodríguez</p>
-                      <p className="text-xs text-[#747487]">carlos.rodriguez@institucion.edu</p>
+                      <p className="text-sm font-medium text-[#232334]">{user?.nombre_completo || "Usuario"}</p>
+                      <p className="text-xs text-[#747487]">{user?.correo || "correo@institucion.edu"}</p>
                     </div>
-                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium">
+                    <button
+                      onClick={handleProfile}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium text-left"
+                    >
                       Mi perfil
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium">
-                      Historial
-                    </a>
-                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium">
-                      Ayuda
-                    </a>
+                    </button>
+                    <button
+                      onClick={handleChangePassword}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium text-left"
+                    >
+                      Cambiar Contraseña
+                    </button>
                     <hr className="my-1 border-[#dedee8]" />
-                    <a href="/login" className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-[#f6f6fa] font-medium">
-                      Cerrar sesión
-                    </a>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#ad3040] hover:bg-[#f6f6fa] font-medium text-left"
+                    >
+                      Cerrar Sesión
+                    </button>
                   </div>
                 </>
               )}
@@ -269,6 +765,17 @@ export default function AlumnoInicioPage() {
           </div>
         </div>
       </main>
+
+      {/* Modales */}
+      <PerfilModal
+        isOpen={showPerfilModal}
+        onClose={() => setShowPerfilModal(false)}
+        user={user}
+      />
+      <CambiarPasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+      />
     </div>
   );
 }
