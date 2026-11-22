@@ -19,7 +19,8 @@ export async function GET() {
     }
 
     return NextResponse.json(instituciones);
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message || 'Error interno' }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

@@ -20,6 +20,7 @@ export async function GET(req: Request) {
       id: payload.sub,
       email: payload.email,
       rol: payload.rol,
+      nombre_completo: payload.nombre_completo,
     });
   } catch {
     return NextResponse.json({ message: 'Token inválido o expirado' }, { status: 401 });
