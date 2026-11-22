@@ -34,11 +34,7 @@ export default function LoginForm() {
         return;
       }
 
-      // Guardar token en localStorage
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      // Redirigir según el rol
+      // Redirigir según el rol - el middleware validará la cookie
       const redirectPath = role === "docente" ? "/docente" : "/alumno";
       router.push(redirectPath);
       router.refresh();

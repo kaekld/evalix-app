@@ -67,15 +67,27 @@ export default function AlumnoInicioPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const router = useRouter();
 
+  // Obtener usuario desde el servidor (cookie HttpOnly)
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const fetchUser = async () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser({
+            id: data.id,
+            nombre_completo: data.nombre_completo || data.email,
+            correo: data.email,
+            institucion: null,
+            institucion_id: null,
+            rol: data.rol,
+          });
+        }
       } catch {
-        setUser(null);
+        // Usuario no autenticado, el middleware redirigirá
       }
-    }
+    };
+    fetchUser();
 
     const handleUserUpdated = (e: CustomEvent<User>) => {
       setUser(e.detail);
@@ -98,9 +110,8 @@ export default function AlumnoInicioPage() {
     });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   };

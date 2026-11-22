@@ -10,7 +10,7 @@ export default function AddGroupCard({ onClick }: AddGroupCardProps) {
   return (
     <button
       onClick={onClick}
-      className="bg-white border-2 border-dashed border-[#dedee8] rounded-xl p-6 text-center hover:border-[#6543ab] hover:bg-[#fafafa] transition-colors flex flex-col items-center justify-between min-h-[18.25rem]"
+      className="bg-white border-2 border-dashed border-[#dedee8] rounded-xl p-6 text-center hover:border-[#6543ab] hover:bg-[#fafafa] transition-colors flex flex-col items-center justify-between min-h-[10rem]"
     >
       <div className="flex flex-col items-center flex-1">
         <div className="w-14 h-14 rounded-full bg-[#f0eafb] flex items-center justify-center mb-4">

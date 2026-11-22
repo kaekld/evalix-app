@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Users, FileText, Clock } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Users, FileText } from "lucide-react";
 
 interface Group {
   id: number;
   name: string;
   code: string;
   subject: string;
-  schedule: string;
   studentsCount: number;
   examsCount: number;
   createdAt: string;
@@ -127,10 +126,6 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
       <div className="p-4 space-y-4">
         {/* Info Row */}
         <div className="flex items-center gap-4 text-xs text-zinc-600">
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {group.schedule}
-          </span>
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
             {group.studentsCount} estudiantes

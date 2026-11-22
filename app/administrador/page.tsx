@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminHeader from "./components/AdminHeader";
 import DashboardCard from "./components/DashboardCard";
@@ -18,9 +18,31 @@ export default function AdministradorHomePage() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
+  // Obtener usuario desde el servidor (cookie HttpOnly)
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser({
+            id: data.id,
+            nombre_completo: data.nombre_completo || data.email,
+            correo: data.email,
+            institucion: null,
+            institucion_id: null,
+            rol: data.rol,
+          });
+        }
+      } catch {
+        // Usuario no autenticado, el middleware redirigirá
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   };

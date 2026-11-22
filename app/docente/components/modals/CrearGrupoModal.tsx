@@ -8,7 +8,6 @@ interface Group {
   name: string;
   code: string;
   subject: string;
-  schedule: string;
   studentsCount: number;
   examsCount: number;
   createdAt: string;
@@ -26,7 +25,6 @@ export default function CrearGrupoModal({ isOpen, onClose, onCreate }: CrearGrup
     name: "",
     code: "",
     subject: "",
-    schedule: "",
   });
   const [errors, setErrors] = useState<Partial<typeof formData>>({});
   const [apiError, setApiError] = useState("");
@@ -34,7 +32,7 @@ export default function CrearGrupoModal({ isOpen, onClose, onCreate }: CrearGrup
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({ name: "", code: "", subject: "", schedule: "" });
+      setFormData({ name: "", code: "", subject: "" });
       setErrors({});
       setApiError("");
     }
@@ -47,7 +45,6 @@ export default function CrearGrupoModal({ isOpen, onClose, onCreate }: CrearGrup
     if (!formData.name.trim()) newErrors.name = "Nombre del grupo es requerido";
     if (!formData.code.trim()) newErrors.code = "Código del grupo es requerido";
     if (!formData.subject.trim()) newErrors.subject = "Materia es requerida";
-    if (!formData.schedule.trim()) newErrors.schedule = "Horario es requerido";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -169,27 +166,6 @@ export default function CrearGrupoModal({ isOpen, onClose, onCreate }: CrearGrup
               <option value="Inteligencia Artificial">Inteligencia Artificial</option>
             </select>
             {errors.subject && <p className="text-sm text-red-500">{errors.subject}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="schedule" className="block text-sm font-medium text-zinc-700">
-              Horario
-            </label>
-            <input
-              id="schedule"
-              name="schedule"
-              type="text"
-              autoComplete="off"
-              placeholder="Lun/Mié 10:00-12:00"
-              value={formData.schedule}
-              onChange={handleChange}
-              disabled={isLoading}
-              className={`h-11 w-full rounded-lg border bg-white px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.schedule
-                ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
-                : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-                } disabled:bg-zinc-50`}
-            />
-            {errors.schedule && <p className="text-sm text-red-500">{errors.schedule}</p>}
           </div>
 
           <div className="flex gap-3 pt-4">

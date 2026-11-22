@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AlumnoHeader from "../components/AlumnoHeader";
 import SubjectSelector from "../components/exams/SubjectSelector";
 import SubjectHeader from "../components/exams/SubjectHeader";
@@ -14,10 +14,44 @@ import {
   getSortedExams,
 } from "../components/exams/types";
 
+interface User {
+  id: string;
+  nombre_completo: string;
+  correo: string;
+  institucion: string | null;
+  institucion_id: string | null;
+  rol: string;
+}
+
 export default function AlumnoExamenesPage() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(1);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+
+  // Obtener usuario desde el servidor (cookie HttpOnly)
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser({
+            id: data.id,
+            nombre_completo: data.nombre_completo || data.email,
+            correo: data.email,
+            institucion: null,
+            institucion_id: null,
+            rol: data.rol,
+          });
+        }
+      } catch {
+        // Usuario no autenticado, el middleware redirigirá
+      }
+    };
+    fetchUser();
+  }, []);
 
   const filteredExams = examsData.filter(
     (exam) => exam.subjectId === selectedSubjectId
@@ -27,10 +61,10 @@ export default function AlumnoExamenesPage() {
   const cancelledExams = filteredExams.filter((e) => e.status === "cancelled");
   const completedExams = filteredExams.filter((e) => e.status === "completed");
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
   };
 
   const handleProfile = () => {
@@ -44,7 +78,7 @@ export default function AlumnoExamenesPage() {
   return (
     <div className="min-h-screen bg-[#f6f6fa] flex flex-col font-sans">
       <AlumnoHeader
-        user={null}
+        user={user}
         onProfile={handleProfile}
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
