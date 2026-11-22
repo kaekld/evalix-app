@@ -25,8 +25,6 @@ async function getAdminUser(): Promise<{ id: string; email: string; nombre_compl
   }
 }
 
-export const instant = false;
-
 export default async function AdminPanelPage() {
   const admin = await getAdminUser();
 

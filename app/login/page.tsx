@@ -20,8 +20,6 @@ async function getUserRole(): Promise<string | null> {
   }
 }
 
-export const instant = false;
-
 export default async function LoginPage() {
   const role = await getUserRole();
   

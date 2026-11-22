@@ -1,31 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Edit, Trash2, Users, FileText } from "lucide-react";
-
-interface Group {
-  id: number;
-  name: string;
-  code: string;
-  subject: string;
-  studentsCount: number;
-  examsCount: number;
-  createdAt: string;
-  expanded: boolean;
-}
+import { Grupo } from "@/lib/hooks/useGrupos";
 
 interface GroupCardProps {
-  group: Group;
-  onToggle: (groupId: number) => void;
-  onDelete: (groupId: number) => void;
-  openDropdown: number | null;
-  setOpenDropdown: (id: number | null) => void;
+  group: Grupo;
+  onToggle: () => void;
+  onEdit: (group: Grupo) => void;
+  onDelete: (groupId: string) => void;
+  openDropdown: string | null;
+  setOpenDropdown: (id: string | null) => void;
 }
 
-export default function GroupCard({ group, onToggle, onDelete, openDropdown, setOpenDropdown }: GroupCardProps) {
+export default function GroupCard({ group, onToggle, onEdit, onDelete, openDropdown, setOpenDropdown }: GroupCardProps) {
   const router = useRouter();
+
+  const handleEdit = () => {
+    setOpenDropdown(null);
+    onEdit(group);
+  };
+
+  const handleDelete = () => {
+    setOpenDropdown(null);
+    onDelete(group.id);
+  };
 
   return (
     <div
@@ -36,17 +36,17 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
         <div className="absolute left-0 top-0 w-1 h-full bg-[#95c9a4]" />
         <div className="pl-4 flex-1 min-w-0">
           <p className="font-semibold text-base leading-relaxed text-[#232334] truncate">
-            {group.name}
+            {group.nombre}
           </p>
           <p className="font-normal text-xs leading-relaxed text-[#747487] mt-0.5 truncate">
-            {group.code} · {group.subject}
+            {group.codigo} · {group.materia}
           </p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onToggle(group.id);
+              onToggle();
             }}
             className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-white transition-colors"
             aria-label={group.expanded ? "Colapsar" : "Expandir"}
@@ -76,14 +76,21 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
             {openDropdown === group.id && (
               <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg border border-[#dedee8] shadow-lg py-1 z-20">
                 <button
+                  onClick={handleEdit}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium text-left"
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
+                </button>
+                <button
                   onClick={() => {
                     router.push(`/docente/grupos/${group.id}`);
                     setOpenDropdown(null);
                   }}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium text-left"
                 >
-                  <Edit className="h-4 w-4" />
-                  Editar
+                  <Users className="h-4 w-4" />
+                  Ver grupo
                 </button>
                 <button
                   onClick={() => {
@@ -105,12 +112,22 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
                   <FileText className="h-4 w-4" />
                   Evaluaciones
                 </button>
-                <hr className="my-1 border-[#dedee8]" />
                 <button
                   onClick={() => {
-                    onDelete(group.id);
+                    router.push(`/docente/grupos/${group.id}/configuracion`);
                     setOpenDropdown(null);
                   }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[#232334] hover:bg-[#f6f6fa] font-medium text-left"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Configuración
+                </button>
+                <hr className="my-1 border-[#dedee8]" />
+                <button
+                  onClick={handleDelete}
                   className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[#ad3040] hover:bg-[#f6f6fa] font-medium text-left"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -128,17 +145,13 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
         <div className="flex items-center gap-4 text-xs text-zinc-600">
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
-            {group.studentsCount} estudiantes
-          </span>
-          <span className="flex items-center gap-1">
-            <FileText className="h-3.5 w-3.5" />
-            {group.examsCount} evaluaciones
+            {group.estudiantes_count} estudiantes
           </span>
         </div>
 
         <div className="pt-2 border-t border-[#dedee8] flex items-center justify-between">
           <span className="font-normal text-xs leading-relaxed text-[#747487]">
-            Creado el {new Date(group.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            Creado el {new Date(group.creado_en).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })}
           </span>
           <button
             onClick={() => router.push(`/docente/grupos/${group.id}`)}
@@ -162,7 +175,7 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
               </div>
               <div>
                 <p className="font-medium text-sm text-zinc-900">Estudiantes</p>
-                <p className="text-xs text-zinc-500">{group.studentsCount} inscritos</p>
+                <p className="text-xs text-zinc-500">{group.estudiantes_count} inscritos</p>
               </div>
             </Link>
             <Link
@@ -174,7 +187,7 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
               </div>
               <div>
                 <p className="font-medium text-sm text-zinc-900">Evaluaciones</p>
-                <p className="text-xs text-zinc-500">{group.examsCount} creadas</p>
+                <p className="text-xs text-zinc-500">0 creadas</p>
               </div>
             </Link>
             <Link
@@ -193,7 +206,7 @@ export default function GroupCard({ group, onToggle, onDelete, openDropdown, set
               </div>
             </Link>
             <button
-              onClick={() => onDelete(group.id)}
+              onClick={handleDelete}
               className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[#dedee8] hover:border-[#ad3040] hover:bg-[#fef2f2] transition-colors"
             >
               <div className="w-8 h-8 rounded-lg bg-[#fef2f2] flex items-center justify-center">

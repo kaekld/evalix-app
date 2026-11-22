@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
 interface CambiarPasswordModalProps {
@@ -9,6 +10,7 @@ interface CambiarPasswordModalProps {
 }
 
 export default function CambiarPasswordModal({ isOpen, onClose }: CambiarPasswordModalProps) {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -79,7 +81,7 @@ export default function CambiarPasswordModal({ isOpen, onClose }: CambiarPasswor
       setTimeout(() => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("user");
-        window.location.href = "/login";
+        router.push("/login");
       }, 2000);
     } catch {
       setApiError("Error de conexión. Intenta de nuevo.");

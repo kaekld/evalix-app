@@ -4,22 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DocenteHeader from "../components/DocenteHeader";
 import CrearGrupoModal from "../components/modals/CrearGrupoModal";
+import EditarGrupoModal from "../components/modals/EditarGrupoModal";
 import PerfilModal from "../components/modals/PerfilModal";
 import CambiarPasswordModal from "../components/modals/CambiarPasswordModal";
 import GroupCard from "../components/groups/GroupCard";
 import AddGroupCard from "../components/groups/AddGroupCard";
 import EmptyState from "../components/groups/EmptyState";
-
-interface Group {
-  id: number;
-  name: string;
-  code: string;
-  subject: string;
-  studentsCount: number;
-  examsCount: number;
-  createdAt: string;
-  expanded: boolean;
-}
+import { useGrupos, Grupo } from "@/lib/hooks/useGrupos";
 
 interface User {
   id: string;
@@ -30,58 +21,36 @@ interface User {
   rol: string;
 }
 
-const groupsData: Group[] = [
-  {
-    id: 1,
-    name: "Programación Orientada a Objetos",
-    code: "POO-2026-A",
-    subject: "Programación",
-    studentsCount: 24,
-    examsCount: 3,
-    createdAt: "2026-09-15",
-    expanded: false,
-  },
-  {
-    id: 2,
-    name: "Sistemas Programables",
-    code: "SIS-2026-B",
-    subject: "Sistemas",
-    studentsCount: 18,
-    examsCount: 2,
-    createdAt: "2026-09-20",
-    expanded: false,
-  },
-  {
-    id: 3,
-    name: "Estructuras de Datos",
-    code: "EDA-2026-A",
-    subject: "Estructuras de Datos",
-    studentsCount: 32,
-    examsCount: 4,
-    createdAt: "2026-10-01",
-    expanded: false,
-  },
-];
-
 export default function DocenteInicioPage() {
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
-  const [groups, setGroups] = useState<Group[]>(groupsData);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showCrearGrupoModal, setShowCrearGrupoModal] = useState(false);
+  const [grupoToEdit, setGrupoToEdit] = useState<Grupo | null>(null);
+  const [showEditarGrupoModal, setShowEditarGrupoModal] = useState(false);
   const router = useRouter();
+
+  const {
+    grupos,
+    loading,
+    error,
+    fetchGrupos,
+    createGrupo,
+    updateGrupo,
+    deleteGrupo,
+  } = useGrupos();
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.dropdown-container')) {
+      if (!target.closest(".dropdown-container")) {
         setOpenDropdown(null);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Obtener usuario desde el servidor (cookie HttpOnly)
@@ -110,32 +79,64 @@ export default function DocenteInicioPage() {
       setUser(e.detail);
     };
     window.addEventListener("user-updated", handleUserUpdated as EventListener);
-    return () => window.removeEventListener("user-updated", handleUserUpdated as EventListener);
+
+    const handleOpenPerfil = () => {
+      setShowPerfilModal(true);
+    };
+    const handleOpenPassword = () => {
+      setShowPasswordModal(true);
+    };
+    window.addEventListener("open-perfil-modal", handleOpenPerfil);
+    window.addEventListener("open-password-modal", handleOpenPassword);
+
+    return () => {
+      window.removeEventListener("user-updated", handleUserUpdated as EventListener);
+      window.removeEventListener("open-perfil-modal", handleOpenPerfil);
+      window.removeEventListener("open-password-modal", handleOpenPassword);
+    };
   }, []);
 
-  const toggleGroup = (groupId: number) => {
-    setGroups(groups.map((g) =>
-      g.id === groupId ? { ...g, expanded: !g.expanded } : g
-    ));
+  // Cargar grupos al montar
+  useEffect(() => {
+    fetchGrupos();
+  }, [fetchGrupos]);
+
+  const toggleGroup = () => {
+    // El estado expanded se maneja localmente en GroupCard
+    // No necesitamos hacer nada aquí por ahora
   };
 
-  const handleCreateGroup = (data: Partial<Group>) => {
-    const newGroup: Group = {
-      id: Date.now(),
-      name: data.name || "",
-      code: data.code || "",
-      subject: data.subject || "",
-      studentsCount: 0,
-      examsCount: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      expanded: true,
-    };
-    setGroups([newGroup, ...groups]);
+  const handleCreateGroup = async (data: { nombre: string; codigo: string; materia: string; descripcion?: string }) => {
+    try {
+      await createGrupo(data);
+      setShowCrearGrupoModal(false);
+    } catch {
+      // Error ya manejado en el hook
+    }
   };
 
-  const handleDeleteGroup = (groupId: number) => {
+  const handleEditGroup = (grupo: Grupo) => {
+    setGrupoToEdit(grupo);
+    setShowEditarGrupoModal(true);
+  };
+
+  const handleUpdateGroup = async (id: string, data: { nombre: string; descripcion: string; activo: boolean }) => {
+    try {
+      await updateGrupo(id, data);
+      setShowEditarGrupoModal(false);
+      setGrupoToEdit(null);
+    } catch {
+      // Error ya manejado en el hook
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.")) {
-      setGroups(groups.filter(g => g.id !== groupId));
+      try {
+        await deleteGrupo(groupId);
+      } catch {
+        // Error ya manejado en el hook
+      }
     }
   };
 
@@ -174,27 +175,50 @@ export default function DocenteInicioPage() {
           </p>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Groups Grid */}
         <section>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.map((group) => (
-              <GroupCard
-                key={group.id}
-                group={group}
-                onToggle={toggleGroup}
-                onDelete={handleDeleteGroup}
-                openDropdown={openDropdown}
-                setOpenDropdown={setOpenDropdown}
-              />
-            ))}
+          {loading ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white border border-[#dedee8] rounded-xl overflow-hidden animate-pulse">
+                  <div className="h-14 bg-[#f6f6fa] border-b border-[#dedee8]" />
+                  <div className="p-4 space-y-4">
+                    <div className="h-4 bg-[#e0e0e0] rounded w-3/4" />
+                    <div className="h-3 bg-[#e0e0e0] rounded w-1/2" />
+                    <div className="h-3 bg-[#e0e0e0] rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {grupos.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  onToggle={toggleGroup}
+                  onEdit={handleEditGroup}
+                  onDelete={handleDeleteGroup}
+                  openDropdown={openDropdown}
+                  setOpenDropdown={setOpenDropdown}
+                />
+              ))}
 
-            {/* Empty State / Add New Group Card */}
-            {groups.length === 0 ? (
-              <EmptyState onCreateClick={() => setShowCrearGrupoModal(true)} />
-            ) : (
-              <AddGroupCard onClick={() => setShowCrearGrupoModal(true)} />
-            )}
-          </div>
+              {/* Empty State / Add New Group Card */}
+              {grupos.length === 0 ? (
+                <EmptyState onCreateClick={() => setShowCrearGrupoModal(true)} />
+              ) : (
+                <AddGroupCard onClick={() => setShowCrearGrupoModal(true)} />
+              )}
+            </div>
+          )}
         </section>
       </main>
 
@@ -203,6 +227,15 @@ export default function DocenteInicioPage() {
         isOpen={showCrearGrupoModal}
         onClose={() => setShowCrearGrupoModal(false)}
         onCreate={handleCreateGroup}
+      />
+      <EditarGrupoModal
+        isOpen={showEditarGrupoModal}
+        onClose={() => {
+          setShowEditarGrupoModal(false);
+          setGrupoToEdit(null);
+        }}
+        onUpdate={handleUpdateGroup}
+        grupo={grupoToEdit}
       />
       <PerfilModal
         isOpen={showPerfilModal}
