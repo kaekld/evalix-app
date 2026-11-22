@@ -10,7 +10,13 @@ const roleRoutes: Record<string, string[]> = {
   ADMINISTRADOR: ['/administrador'],
 };
 
-const publicPaths = ['/login', '/api/auth/login', '/api/auth/register'];
+const publicPaths = [
+  '/login',
+  '/admin',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/admin/login',
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,16 +26,65 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if path is protected
-  const isProtected = Object.values(roleRoutes).some((routes) =>
-    routes.some((route) => pathname.startsWith(route))
-  );
+  // Admin panel routes - check admin_token cookie
+  if (pathname.startsWith('/admin/panel')) {
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (!adminToken) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+    try {
+      const { payload } = await jwtVerify(adminToken, secret);
+      if (payload.rol !== 'ADMINISTRADOR') {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+      const response = NextResponse.next();
+      response.headers.set('x-user-id', payload.sub as string);
+      response.headers.set('x-user-email', payload.email as string);
+      response.headers.set('x-user-role', payload.rol as string);
+      return response;
+    } catch {
+      const response = NextResponse.redirect(new URL('/admin', request.url));
+      response.cookies.delete('admin_token');
+      return response;
+    }
+  }
+
+  // Legacy /administrador routes - check auth_token cookie
+  if (pathname.startsWith('/administrador')) {
+    const token = request.cookies.get('auth_token')?.value;
+    if (!token) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    try {
+      const { payload } = await jwtVerify(token, secret);
+      const userRole = payload.rol as string;
+      if (userRole !== 'ADMINISTRADOR') {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+      const response = NextResponse.next();
+      response.headers.set('x-user-id', payload.sub as string);
+      response.headers.set('x-user-email', payload.email as string);
+      response.headers.set('x-user-role', userRole);
+      return response;
+    } catch {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('auth_token');
+      return response;
+    }
+  }
+
+  // Student and teacher routes - check auth_token cookie
+  const isProtected = Object.entries(roleRoutes).some(([role, routes]) => {
+    if (role === 'ADMINISTRADOR') return false; // handled above
+    return routes.some((route) => pathname.startsWith(route));
+  });
 
   if (!isProtected) {
     return NextResponse.next();
   }
 
-  // Get token from HttpOnly cookie
   const token = request.cookies.get('auth_token')?.value;
 
   if (!token) {
@@ -71,5 +126,6 @@ export const config = {
     '/docente/:path*',
     '/alumno/:path*',
     '/administrador/:path*',
+    '/admin/panel/:path*',
   ],
 };

@@ -34,6 +34,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'La cuenta se encuentra inactiva' }, { status: 401 });
     }
 
+    // Los administradores deben usar /admin para iniciar sesión
+    if (user.rol === 'ADMINISTRADOR') {
+      return NextResponse.json(
+        { message: 'Los administradores deben iniciar sesión en /admin' },
+        { status: 403 },
+      );
+    }
+
     if (role && user.rol !== role.toUpperCase()) {
       return NextResponse.json({ message: `Este usuario no tiene el rol de ${role}` }, { status: 401 });
     }
