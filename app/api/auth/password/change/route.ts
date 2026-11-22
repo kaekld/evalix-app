@@ -5,18 +5,31 @@ import { createClient } from '@supabase/supabase-js';
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'evalix_secret_key_2026');
 
+function extraerToken(req: Request): string | null {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length);
+  }
+
+  const cookieHeader = req.headers.get('cookie') || '';
+  const authCookie = cookieHeader
+    .split('; ')
+    .find((c) => c.startsWith('auth_token='));
+
+  return authCookie ? authCookie.slice('auth_token='.length) : null;
+}
+
 export async function PUT(req: Request) {
   const supabase = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = extraerToken(req);
+    if (!token) {
       return NextResponse.json({ message: 'Token no proporcionado' }, { status: 401 });
     }
 
-    const token = authHeader.split(' ')[1];
     const { payload } = await jwtVerify(token, secret);
     const userId = payload.sub as string;
 
@@ -62,7 +75,8 @@ export async function PUT(req: Request) {
     }
 
     return NextResponse.json({ message: 'Contraseña cambiada correctamente' });
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message || 'Error interno' }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

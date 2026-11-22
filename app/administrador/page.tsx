@@ -29,8 +29,8 @@ export default function AdministradorHomePage() {
             id: data.id,
             nombre_completo: data.nombre_completo || data.email,
             correo: data.email,
-            institucion: null,
-            institucion_id: null,
+            institucion: data.institucion ?? null,
+            institucion_id: data.institucion_id ?? null,
             rol: data.rol,
           });
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { type Role } from "./RoleSelector";
@@ -35,14 +35,7 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [isLoadingInstituciones, setIsLoadingInstituciones] = useState(true);
   const router = useRouter();
 
-  // Cargar instituciones al abrir el modal
-  useEffect(() => {
-    if (isOpen) {
-      cargarInstituciones();
-    }
-  }, [isOpen]);
-
-  const cargarInstituciones = async () => {
+  const cargarInstituciones = useCallback(async () => {
     setIsLoadingInstituciones(true);
     try {
       const res = await fetch("/api/instituciones");
@@ -55,7 +48,16 @@ export default function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     } finally {
       setIsLoadingInstituciones(false);
     }
-  };
+  }, []);
+
+  // Cargar instituciones al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      // La petición es asíncrona; el estado solo refleja el inicio de la carga.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      cargarInstituciones();
+    }
+  }, [isOpen, cargarInstituciones]);
 
   if (!isOpen) return null;
 

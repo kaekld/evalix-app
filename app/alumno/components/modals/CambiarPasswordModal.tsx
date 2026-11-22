@@ -22,6 +22,8 @@ export default function CambiarPasswordModal({ isOpen, onClose }: CambiarPasswor
 
   useEffect(() => {
     if (isOpen) {
+      // Reiniciar el formulario al abrir el modal es intencional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setErrors({});
       setApiError("");

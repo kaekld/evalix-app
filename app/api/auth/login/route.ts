@@ -14,10 +14,16 @@ export async function POST(req: Request) {
   try {
     const { email, password, role } = await req.json();
 
+    if (!email || !password) {
+      return NextResponse.json({ message: 'Correo y contraseña son obligatorios' }, { status: 400 });
+    }
+
+    const correoNormalizado = String(email).trim().toLowerCase();
+
     const { data: user, error } = await supabase
       .from('usuario')
-      .select('*')
-      .eq('correo', email)
+      .select('id, nombre_completo, correo, password_hash, activo, rol, institucion_id, institucion:institucion_id(nombre)')
+      .eq('correo', correoNormalizado)
       .maybeSingle();
 
     if (error || !user) {
@@ -42,12 +48,21 @@ export async function POST(req: Request) {
       .setExpirationTime('24h')
       .sign(secret);
 
+    const institucionRelacion = user.institucion as
+      | { nombre: string }
+      | { nombre: string }[]
+      | null;
+    const institucion = Array.isArray(institucionRelacion)
+      ? institucionRelacion[0]?.nombre ?? null
+      : institucionRelacion?.nombre ?? null;
+
     const response = NextResponse.json({
       user: {
         id: user.id,
         nombre_completo: user.nombre_completo,
         correo: user.correo,
-        institucion: user.institucion,
+        institucion,
+        institucion_id: user.institucion_id,
         rol: user.rol,
       },
     });

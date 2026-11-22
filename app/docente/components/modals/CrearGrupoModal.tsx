@@ -32,6 +32,8 @@ export default function CrearGrupoModal({ isOpen, onClose, onCreate }: CrearGrup
 
   useEffect(() => {
     if (isOpen) {
+      // Reiniciar el formulario al abrir el modal es intencional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({ name: "", code: "", subject: "" });
       setErrors({});
       setApiError("");

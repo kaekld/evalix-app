@@ -84,10 +84,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'La matrícula es obligatoria para alumnos' }, { status: 400 });
     }
 
+    const correoNormalizado = email.trim().toLowerCase();
+
     const { data: existingUser } = await supabase
       .from('usuario')
       .select('id')
-      .eq('correo', email)
+      .eq('correo', correoNormalizado)
       .maybeSingle();
 
     if (existingUser) {
@@ -96,44 +98,80 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const { data: user, error: userError } = await supabase
-      .from('usuario')
-      .insert({
-        nombre_completo: fullName,
-        correo: email,
-        institucion_id: institucion_id,
-        password_hash: passwordHash,
-        activo: true,
-        rol: rolNormalizado,
-      })
-      .select('id, nombre_completo, correo, institucion_id, activo, rol')
-      .single();
+    // El RPC inserta usuario + perfil de rol en una sola transacción.
+    // Así no quedan usuarios sin fila en alumno/docente/administrador.
+    const { data: rpcUser, error: userError } = await supabase.rpc('registrar_usuario', {
+      p_nombre_completo: fullName.trim(),
+      p_correo: correoNormalizado,
+      p_institucion_id: institucion_id,
+      p_password_hash: passwordHash,
+      p_rol: rolNormalizado,
+      p_matricula: rolNormalizado === 'ALUMNO' ? matricula.trim() : null,
+      p_numero_empleado: rolNormalizado === 'DOCENTE' ? (numero_empleado?.trim() || null) : null,
+    });
 
-    if (userError || !user) {
-      return NextResponse.json({ message: `Error al crear usuario: ${userError?.message}` }, { status: 400 });
+    if (userError || !rpcUser) {
+      const errorMessage = userError?.message || 'Error al crear usuario';
+      const isDuplicateEmail =
+        errorMessage.includes('usuario_correo_key') ||
+        errorMessage.includes('usuario_correo_lower_key');
+      const isDuplicateMatricula = errorMessage.includes('alumno_matricula_key');
+
+      return NextResponse.json(
+        {
+          message: isDuplicateEmail
+            ? 'El correo ya está registrado'
+            : isDuplicateMatricula
+              ? 'La matrícula ya está registrada'
+              : errorMessage,
+        },
+        { status: isDuplicateEmail || isDuplicateMatricula ? 409 : 400 },
+      );
     }
 
-    if (rolNormalizado === 'ALUMNO') {
-      const { error } = await supabase.from('alumno').insert({ id: user.id, matricula: matricula!.trim() });
-      if (error) return NextResponse.json({ message: error.message }, { status: 400 });
-    } else if (rolNormalizado === 'DOCENTE') {
-      const { error } = await supabase.from('docente').insert({ id: user.id, numero_empleado: numero_empleado || null });
-      if (error) return NextResponse.json({ message: error.message }, { status: 400 });
-    } else if (rolNormalizado === 'ADMINISTRADOR') {
-      const { error } = await supabase.from('administrador').insert({ id: user.id });
-      if (error) return NextResponse.json({ message: error.message }, { status: 400 });
+    const user = (Array.isArray(rpcUser) ? rpcUser[0] : rpcUser) as {
+      id: string;
+      nombre_completo: string;
+      correo: string;
+      institucion_id: string;
+      activo: boolean;
+      rol: string;
+    } | null;
+
+    if (!user) {
+      return NextResponse.json({ message: 'No se pudo crear el usuario' }, { status: 500 });
     }
 
-    const access_token = await new SignJWT({ sub: user.id, email: user.correo, rol: user.rol })
+    const safeUser = {
+      id: user.id,
+      nombre_completo: user.nombre_completo,
+      correo: user.correo,
+      institucion_id: user.institucion_id,
+      activo: user.activo,
+      rol: user.rol,
+    };
+
+    const access_token = await new SignJWT({ sub: safeUser.id, email: safeUser.correo, rol: safeUser.rol })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('24h')
       .sign(secret);
 
-    return NextResponse.json(
-      { message: 'Usuario registrado exitosamente', access_token, user },
+    const response = NextResponse.json(
+      { message: 'Usuario registrado exitosamente', access_token, user: safeUser },
       { status: 201 },
     );
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message || 'Error interno' }, { status: 500 });
+
+    response.cookies.set('auth_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24,
+      path: '/',
+    });
+
+    return response;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

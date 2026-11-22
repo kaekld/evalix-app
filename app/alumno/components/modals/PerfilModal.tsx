@@ -31,6 +31,8 @@ export default function PerfilModal({ isOpen, onClose, user }: PerfilModalProps)
 
   useEffect(() => {
     if (isOpen && user) {
+      // Sincronizar el formulario con el usuario al abrir el modal.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         nombre_completo: user.nombre_completo || "",
         correo: user.correo || "",
