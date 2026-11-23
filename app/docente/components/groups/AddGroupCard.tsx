@@ -17,7 +17,7 @@ export default function AddGroupCard({ onClick }: AddGroupCardProps) {
           <Plus className="h-7 w-7 text-[#6543ab]" />
         </div>
         <h3 className="font-semibold text-base text-zinc-900 mb-1">Nuevo grupo</h3>
-        <p className="text-xs text-zinc-500">Añade una nueva materia y grupo</p>
+        <p className="text-xs text-zinc-500">Añade una nueva categoría y grupo</p>
       </div>
     </button>
   );

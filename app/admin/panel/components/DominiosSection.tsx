@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Loader2, AlertCircle, Globe } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableFooter } from "@/components/ui";
+import { Badge, StatusBadge } from "@/components/ui";
+import { Button } from "@/components/ui";
 import DominioForm from "./DominioForm";
 
 interface Dominio {
@@ -127,17 +130,16 @@ export default function DominiosSection() {
       {/* Header with create button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-900">Dominios permitidos</h2>
-          <p className="text-zinc-500 mt-1">Gestiona los dominios de correo autorizados por institución y rol</p>
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">Dominios permitidos</h2>
+          <p className="text-[var(--color-text-secondary)] mt-1">Gestiona los dominios de correo autorizados por institución y rol</p>
         </div>
-        <button
+        <Button
           onClick={() => { setEditingDominio(null); setShowForm(true); }}
           disabled={instituciones.length === 0}
-          className="flex items-center gap-2 px-4 h-10 rounded-lg bg-orange-600 text-white font-medium text-sm hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          icon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" />
           Nuevo dominio
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -148,94 +150,88 @@ export default function DominiosSection() {
       )}
 
       {instituciones.length === 0 && (
-        <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700">
-          <AlertCircle className="w-5 h-5 inline-block mr-2" />
+        <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
           No hay instituciones registradas. Crea una institución primero para poder agregar dominios.
         </div>
       )}
 
       {/* Dominios table */}
-      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#f6f6fa] border-b border-zinc-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">Dominio</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">Institución</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">Tipo</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-zinc-600 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {dominios.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
-                    No hay dominios registrados
-                  </td>
-                </tr>
-              ) : (
-                dominios.map((dom) => (
-                  <tr key={dom.id} className="hover:bg-[#fafafa]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <span className="font-medium text-zinc-900 font-mono text-sm">{dom.dominio}</span>
+      <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <Table striped hoverable>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Dominio</TableHead>
+              <TableHead>Institución</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead align="right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {dominios.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="px-6 py-12 text-center text-[var(--color-text-secondary)]">
+                  No hay dominios registrados
+                </TableCell>
+              </TableRow>
+            ) : (
+              dominios.map((dom) => (
+                <TableRow key={dom.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Globe className="w-5 h-5 text-blue-600" />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-zinc-600">{dom.institucion_nombre}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-zinc-100 text-zinc-700">
-                        {dom.tipo}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        dom.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      }`}>
-                        {dom.activo ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setEditingDominio(dom)}
-                          disabled={deletingId === dom.id}
-                          className="p-2 text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Editar"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(dom.id)}
-                          disabled={deletingId === dom.id}
-                          className="p-2 text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Eliminar"
-                        >
-                          {deletingId === dom.id ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-5 h-5" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <span className="font-medium text-[var(--color-text-primary)] font-mono text-sm">{dom.dominio}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-[var(--color-text-secondary)]">{dom.institucion_nombre}</TableCell>
+                  <TableCell>
+                    <Badge variant="default">{dom.tipo}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={dom.activo ? "active" : "inactive"} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setEditingDominio(dom)}
+                        disabled={deletingId === dom.id}
+                        className="p-2 text-[var(--color-text-muted)] hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Editar"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(dom.id)}
+                        disabled={deletingId === dom.id}
+                        className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] rounded-lg transition-colors disabled:opacity-50"
+                        title="Eliminar"
+                      >
+                        {deletingId === dom.id ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
         {deleteError && (
-          <div className="p-4 border-t border-zinc-200 bg-red-50 text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {deleteError}
-          </div>
+          <TableFooter>
+            <div className="p-4 border-t border-[var(--color-border)] bg-red-50 text-red-700 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              {deleteError}
+            </div>
+          </TableFooter>
         )}
       </div>
 

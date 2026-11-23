@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import DocenteHeader from "../components/DocenteHeader";
+import { BaseHeader } from "@/components/ui";
 import CrearGrupoModal from "../components/modals/CrearGrupoModal";
 import EditarGrupoModal from "../components/modals/EditarGrupoModal";
 import PerfilModal from "../components/modals/PerfilModal";
 import CambiarPasswordModal from "../components/modals/CambiarPasswordModal";
-import GroupCard from "../components/groups/GroupCard";
+import { GroupCard, type DocenteGroup } from "@/components/ui";
 import AddGroupCard from "../components/groups/AddGroupCard";
 import EmptyState from "../components/groups/EmptyState";
 import { useGrupos, Grupo } from "@/lib/hooks/useGrupos";
+import { Skeleton, CardGridSkeleton } from "@/components/ui";
 
 interface User {
   id: string;
@@ -22,12 +23,12 @@ interface User {
 }
 
 export default function DocenteInicioPage() {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showCrearGrupoModal, setShowCrearGrupoModal] = useState(false);
-  const [grupoToEdit, setGrupoToEdit] = useState<Grupo | null>(null);
+  const [grupoToEdit, setGrupoToEdit] = useState<DocenteGroup | null>(null);
   const [showEditarGrupoModal, setShowEditarGrupoModal] = useState(false);
   const router = useRouter();
 
@@ -40,18 +41,6 @@ export default function DocenteInicioPage() {
     updateGrupo,
     deleteGrupo,
   } = useGrupos();
-
-  // Cerrar dropdown al hacer click fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".dropdown-container")) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Obtener usuario desde el servidor (cookie HttpOnly)
   useEffect(() => {
@@ -71,6 +60,8 @@ export default function DocenteInicioPage() {
         }
       } catch {
         // Usuario no autenticado, el middleware redirigirá
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchUser();
@@ -101,12 +92,7 @@ export default function DocenteInicioPage() {
     fetchGrupos();
   }, [fetchGrupos]);
 
-  const toggleGroup = () => {
-    // El estado expanded se maneja localmente en GroupCard
-    // No necesitamos hacer nada aquí por ahora
-  };
-
-  const handleCreateGroup = async (data: { nombre: string; codigo: string; materia: string; descripcion?: string }) => {
+  const handleCreateGroup = async (data: { nombre: string; codigo: string; categoria: string; descripcion?: string }) => {
     try {
       await createGrupo(data);
       setShowCrearGrupoModal(false);
@@ -115,7 +101,7 @@ export default function DocenteInicioPage() {
     }
   };
 
-  const handleEditGroup = (grupo: Grupo) => {
+  const handleEditGroup = (grupo: DocenteGroup) => {
     setGrupoToEdit(grupo);
     setShowEditarGrupoModal(true);
   };
@@ -130,10 +116,10 @@ export default function DocenteInicioPage() {
     }
   };
 
-  const handleDeleteGroup = async (groupId: string) => {
+  const handleDeleteGroup = async (groupId: string | number) => {
     if (confirm("¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.")) {
       try {
-        await deleteGrupo(groupId);
+        await deleteGrupo(String(groupId));
       } catch {
         // Error ya manejado en el hook
       }
@@ -154,24 +140,62 @@ export default function DocenteInicioPage() {
     setShowPasswordModal(true);
   };
 
+  const handleViewGroup = (groupId: string | number) => {
+    router.push(`/docente/grupos/${groupId}`);
+  };
+
+  const handleViewStudents = (groupId: string | number) => {
+    router.push(`/docente/grupos/${groupId}/estudiantes`);
+  };
+
+  const handleViewEvaluaciones = (groupId: string | number) => {
+    router.push(`/docente/grupos/${groupId}/evaluaciones`);
+  };
+
+  const handleViewConfiguracion = (groupId: string | number) => {
+    router.push(`/docente/grupos/${groupId}/configuracion`);
+  };
+
+  const navigationLinks = [
+    { href: "/docente/inicio", label: "Inicio", active: true },
+    { href: "/docente/evaluaciones", label: "Evaluaciones" },
+    { href: "/docente/estudiantes", label: "Estudiantes" },
+  ];
+
+  const mapToDocenteGroup = (g: Grupo): DocenteGroup => ({
+    id: g.id,
+    nombre: g.nombre,
+    codigo: g.codigo,
+    categoria: g.categoria,
+    descripcion: g.descripcion,
+    creado_en: g.creado_en,
+    estudiantes_count: g.estudiantes_count,
+    expanded: g.expanded,
+    evaluaciones_count: 0,
+  });
+
   return (
-    <div className="min-h-screen bg-[#f6f6fa] flex flex-col font-sans">
-      <DocenteHeader
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+      <BaseHeader
         user={user}
+        role="DOCENTE"
+        navigationLinks={navigationLinks}
         onProfile={handleProfile}
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
+        brandColor="purple"
+        isLoading={userLoading}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="font-semibold text-4xl leading-relaxed text-[#232334] tracking-tight">
+          <h1 className="font-semibold text-4xl leading-relaxed text-[var(--color-text-primary)] tracking-tight">
             Mis Grupos
           </h1>
-          <p className="mt-1 font-normal text-base leading-relaxed text-[#747487]">
-            Gestiona tus grupos y materias
+          <p className="mt-1 font-normal text-base leading-relaxed text-[var(--color-text-secondary)]">
+            Gestiona tus grupos y categorías
           </p>
         </div>
 
@@ -185,29 +209,21 @@ export default function DocenteInicioPage() {
         {/* Groups Grid */}
         <section>
           {loading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white border border-[#dedee8] rounded-xl overflow-hidden animate-pulse">
-                  <div className="h-14 bg-[#f6f6fa] border-b border-[#dedee8]" />
-                  <div className="p-4 space-y-4">
-                    <div className="h-4 bg-[#e0e0e0] rounded w-3/4" />
-                    <div className="h-3 bg-[#e0e0e0] rounded w-1/2" />
-                    <div className="h-3 bg-[#e0e0e0] rounded w-1/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <CardGridSkeleton count={3} />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {grupos.map((group) => (
                 <GroupCard
                   key={group.id}
-                  group={group}
-                  onToggle={toggleGroup}
-                  onEdit={handleEditGroup}
-                  onDelete={handleDeleteGroup}
-                  openDropdown={openDropdown}
-                  setOpenDropdown={setOpenDropdown}
+                  group={mapToDocenteGroup(group)}
+                  variant="docente"
+                  onToggle={() => {}}
+                  onEdit={(g) => handleEditGroup(g)}
+                  onDelete={(id) => handleDeleteGroup(id)}
+                  onViewGroup={(id) => handleViewGroup(id)}
+                  onViewStudents={(id) => handleViewStudents(id)}
+                  onViewEvaluaciones={(id) => handleViewEvaluaciones(id)}
+                  onViewConfiguracion={(id) => handleViewConfiguracion(id)}
                 />
               ))}
 

@@ -25,7 +25,7 @@ async function getGrupo(id: string, docenteId: string) {
 
   const { data, error } = await supabase
     .from("grupo")
-    .select("id, nombre, codigo, materia, descripcion, activo, creado_en, actualizado_en, institucion_id")
+    .select("id, nombre, codigo, categoria, descripcion, activo, creado_en, actualizado_en, institucion_id")
     .eq("id", id)
     .eq("docente_id", docenteId)
     .single();

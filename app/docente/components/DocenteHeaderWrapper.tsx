@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import DocenteHeader from "./DocenteHeader";
+import { BaseHeader } from "@/components/ui";
 
 interface User {
   id: string;
@@ -16,11 +16,16 @@ interface DocenteHeaderWrapperProps {
   user: User | null;
 }
 
+const navigationLinks = [
+  { href: "/docente/inicio", label: "Inicio" },
+  { href: "/docente/evaluaciones", label: "Evaluaciones" },
+  { href: "/docente/estudiantes", label: "Estudiantes" },
+];
+
 export default function DocenteHeaderWrapper({ user }: DocenteHeaderWrapperProps) {
   const router = useRouter();
 
   const handleProfile = () => {
-    // Dispatch event to open perfil modal in parent
     window.dispatchEvent(new CustomEvent("open-perfil-modal"));
   };
 
@@ -35,11 +40,14 @@ export default function DocenteHeaderWrapper({ user }: DocenteHeaderWrapperProps
   };
 
   return (
-    <DocenteHeader
+    <BaseHeader
       user={user}
+      role="DOCENTE"
+      navigationLinks={navigationLinks}
       onProfile={handleProfile}
       onChangePassword={handleChangePassword}
       onLogout={handleLogout}
+      brandColor="purple"
     />
   );
 }

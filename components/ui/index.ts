@@ -1,0 +1,11 @@
+export { Button, type ButtonProps } from "./Button";
+export { Input, Textarea, Select, type InputProps, type TextareaProps, type SelectProps } from "./Input";
+export { Modal, ModalHeader, ModalFooter, type ModalProps } from "./Modal";
+export { Badge, StatusBadge, type BadgeProps, type StatusBadgeProps } from "./Badge";
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./Card";
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableFooter, TablePagination, type TableProps } from "./Table";
+export { Skeleton, TableSkeleton, CardGridSkeleton } from "./Skeleton";
+export { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSeparator, type DropdownProps } from "./Dropdown";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
+export { BaseHeader, type BaseHeaderProps, type UserRole } from "./BaseHeader";
+export { GroupCard, type GroupCardProps, type DocenteGroup, type AlumnoGroup, type Exam } from "./GroupCard";

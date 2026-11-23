@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AlumnoHeader from "../components/AlumnoHeader";
+import { BaseHeader } from "@/components/ui";
 import SubjectSelector from "../components/exams/SubjectSelector";
 import SubjectHeader from "../components/exams/SubjectHeader";
 import ExamSection from "../components/exams/ExamSection";
@@ -23,14 +23,18 @@ interface User {
   rol: string;
 }
 
+const navigationLinks = [
+  { href: "/alumno/inicio", label: "Inicio", active: true },
+  { href: "/alumno/examenes", label: "Exámenes" },
+];
+
 export default function AlumnoExamenesPage() {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(1);
   const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const router = useRouter();
 
-  // Obtener usuario desde el servidor (cookie HttpOnly)
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -48,6 +52,8 @@ export default function AlumnoExamenesPage() {
         }
       } catch {
         // Usuario no autenticado, el middleware redirigirá
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchUser();
@@ -67,28 +73,28 @@ export default function AlumnoExamenesPage() {
     router.refresh();
   };
 
-  const handleProfile = () => {
-    setUserMenuOpen(false);
-  };
+  const handleProfile = () => {};
 
-  const handleChangePassword = () => {
-    setUserMenuOpen(false);
-  };
+  const handleChangePassword = () => {};
 
   return (
-    <div className="min-h-screen bg-[#f6f6fa] flex flex-col font-sans">
-      <AlumnoHeader
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+      <BaseHeader
         user={user}
+        role="ALUMNO"
+        navigationLinks={navigationLinks}
         onProfile={handleProfile}
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
+        brandColor="purple"
+        isLoading={userLoading}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="font-semibold text-4xl leading-relaxed text-[#232334] tracking-tight">
+          <h1 className="font-semibold text-4xl leading-relaxed text-[var(--color-text-primary)] tracking-tight">
             Mis Exámenes
           </h1>
         </div>

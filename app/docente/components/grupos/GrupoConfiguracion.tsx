@@ -8,7 +8,7 @@ interface Grupo {
   id: string;
   nombre: string;
   codigo: string;
-  materia: string;
+  categoria: string;
   descripcion: string | null;
   activo: boolean;
   creado_en: string;
@@ -263,8 +263,8 @@ export default function GrupoConfiguracion({ grupo, configuracion: serverConfig 
               <p className="font-mono text-base text-zinc-900 mt-1">{grupo.codigo}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Materia</p>
-              <p className="text-base text-zinc-900 mt-1">{grupo.materia}</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Categoría</p>
+              <p className="text-base text-zinc-900 mt-1">{grupo.categoria}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Estado</p>

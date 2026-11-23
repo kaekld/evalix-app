@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { Modal, Input, Button } from "@/components/ui";
 
 interface CambiarPasswordModalProps {
   isOpen: boolean;
@@ -32,8 +32,6 @@ export default function CambiarPasswordModal({ isOpen, onClose }: CambiarPasswor
       setApiSuccess("");
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const validateForm = () => {
     const newErrors: Partial<typeof formData> = {};
@@ -90,148 +88,123 @@ export default function CambiarPasswordModal({ isOpen, onClose }: CambiarPasswor
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-    if (apiError) setApiError("");
-    if (apiSuccess) setApiSuccess("");
-  };
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => {
+        if (prev[name as keyof typeof prev]) {
+          const next = { ...prev };
+          delete next[name as keyof typeof next];
+          return next;
+        }
+        return prev;
+      });
+      setApiError((prev) => (prev ? "" : prev));
+      setApiSuccess((prev) => (prev ? "" : prev));
+    },
+    []
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="relative w-full max-w-4xl rounded-xl bg-white p-8 shadow-xl max-h-[95vh] overflow-y-auto">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isLoading}
-          className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 transition disabled:opacity-50"
-          aria-label="Cerrar modal"
-        >
-          <X className="h-5 w-5 cursor-pointer" />
-        </button>
-
-        <h2 className="text-3xl font-bold text-center text-zinc-900 mt-5">CAMBIAR CONTRASEÑA</h2>
-        <p className="mt-2 text-center text-zinc-500">
-          Ingresa tu contraseña actual y la nueva
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {apiError && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center" role="alert">
-              {apiError}
-            </div>
-          )}
-          {apiSuccess && (
-            <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center" role="alert">
-              {apiSuccess}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-zinc-700">
-              Contraseña actual
-            </label>
-            <div className="relative">
-              <input
-                id="currentPassword"
-                name="currentPassword"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                disabled={isLoading}
-                className={`h-11 w-full rounded-lg border bg-white pl-4 pr-12 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.currentPassword
-                  ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
-                  : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-                  } disabled:bg-zinc-50`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                disabled={isLoading}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition cursor-pointer disabled:opacity-50"
-              >
-                {showPassword ? "Ocultar" : "Mostrar"}
-              </button>
-            </div>
-            {errors.currentPassword && <p className="text-sm text-red-500">{errors.currentPassword}</p>}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="CAMBIAR CONTRASEÑA"
+      description="Ingresa tu contraseña actual y la nueva"
+      size="lg"
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isLoading}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="cambiar-password-form" loading={isLoading} disabled={isLoading}>
+            {isLoading ? "Cambiando..." : "Cambiar contraseña"}
+          </Button>
+        </>
+      }
+    >
+      <form id="cambiar-password-form" onSubmit={handleSubmit} className="space-y-4">
+        {apiError && (
+          <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center" role="alert">
+            {apiError}
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="newPassword" className="block text-sm font-medium text-zinc-700">
-              Nueva contraseña
-            </label>
-            <div className="relative">
-              <input
-                id="newPassword"
-                name="newPassword"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={formData.newPassword}
-                onChange={handleChange}
-                disabled={isLoading}
-                className={`h-11 w-full rounded-lg border bg-white pl-4 pr-12 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.newPassword
-                  ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
-                  : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-                  } disabled:bg-zinc-50`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                disabled={isLoading}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition cursor-pointer disabled:opacity-50"
-              >
-                {showPassword ? "Ocultar" : "Mostrar"}
-              </button>
-            </div>
-            {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
+        )}
+        {apiSuccess && (
+          <div className="p-3 rounded-lg bg-green-50 text-green-600 text-sm text-center" role="alert">
+            {apiSuccess}
           </div>
+        )}
 
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700">
-              Confirmar nueva contraseña
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
+        <div className="space-y-2">
+          <label htmlFor="currentPassword" className="block text-sm font-medium text-[var(--color-text-primary)]">
+            Contraseña actual
+          </label>
+          <div className="relative">
+            <Input
+              id="currentPassword"
+              name="currentPassword"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              value={formData.currentPassword}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="pr-12"
+              error={errors.currentPassword}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={isLoading}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition cursor-pointer disabled:opacity-50"
+            >
+              {showPassword ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--color-text-primary)]">
+            Nueva contraseña
+          </label>
+          <div className="relative">
+            <Input
+              id="newPassword"
+              name="newPassword"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="••••••••"
-              value={formData.confirmPassword}
+              value={formData.newPassword}
               onChange={handleChange}
               disabled={isLoading}
-              className={`h-11 w-full rounded-lg border bg-white px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 ${errors.confirmPassword
-                ? "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/10"
-                : "border-zinc-200 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-                } disabled:bg-zinc-50`}
+              className="pr-12"
+              error={errors.newPassword}
             />
-            {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
-          </div>
-
-          <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => setShowPassword((v) => !v)}
               disabled={isLoading}
-              className="flex-1 h-11 rounded-lg border border-zinc-200 bg-white font-semibold text-zinc-700 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition cursor-pointer disabled:opacity-50"
             >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 h-11 items-center justify-center rounded-lg bg-[#6543AB] font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Cambiando..." : "Cambiar contraseña"}
+              {showPassword ? "Ocultar" : "Mostrar"}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        <Input
+          label="Confirmar nueva contraseña"
+          id="confirmPassword"
+          name="confirmPassword"
+          type={showPassword ? "text" : "password"}
+          autoComplete="new-password"
+          placeholder="••••••••"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          disabled={isLoading}
+          error={errors.confirmPassword}
+        />
+      </form>
+    </Modal>
   );
 }

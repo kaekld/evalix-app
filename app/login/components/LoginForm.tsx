@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import RoleSelector, { type Role } from "./RoleSelector";
 import RegisterModal from "./RegisterModal";
+import { Input, Button } from "@/components/ui";
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +35,6 @@ export default function LoginForm() {
         return;
       }
 
-      // Redirigir según el rol - el middleware validará la cookie
       const redirectPath = role === "docente" ? "/docente" : "/alumno";
       router.push(redirectPath);
       router.refresh();
@@ -48,10 +48,10 @@ export default function LoginForm() {
   return (
     <section className="relative flex w-full flex-col justify-center px-6 py-12 lg:w-3/5 lg:px-16">
       <div className="mx-auto w-full max-w-md">
-        <h1 className="text-5xl font-bold text-center tracking-tight text-zinc-900">
+        <h1 className="text-5xl font-bold text-center tracking-tight text-[var(--color-text-primary)]">
           INICIAR SESIÓN
         </h1>
-        <p className="mt-2 text-base text-center text-zinc-500">
+        <p className="mt-2 text-base text-center text-[var(--color-text-secondary)]">
           Bienvenido de nuevo. Ingresa tus datos para continuar.
         </p>
 
@@ -64,37 +64,27 @@ export default function LoginForm() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="block text-base font-medium text-zinc-700"
-            >
-              Correo electrónico
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="tu@institucion.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              className="h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 disabled:bg-zinc-50"
-            />
-          </div>
+          <Input
+            label="Correo electrónico"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="tu@institucion.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+            error={error && !email ? "Correo electrónico requerido" : undefined}
+          />
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-base font-medium text-zinc-700"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--color-text-primary)]">
                 Contraseña
               </label>
             </div>
             <div className="relative">
-              <input
+              <Input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -103,50 +93,40 @@ export default function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
-                className="h-12 w-full rounded-lg border border-zinc-200 bg-white pl-4 pr-24 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 disabled:bg-zinc-50"
+                className="pr-24"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 disabled={isLoading}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-base font-medium text-zinc-500 transition hover:text-zinc-900 disabled:opacity-50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition cursor-pointer disabled:opacity-50"
               >
                 {showPassword ? "Ocultar" : "Mostrar"}
               </button>
             </div>
-            <a
-              href="#"
-              className="text-base font-medium text-zinc-900 hover:underline"
-            >
+            <a href="#" className="text-sm font-medium text-[var(--color-text-primary)] hover:underline">
               ¿Olvidaste tu contraseña?
             </a>
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="flex h-12 w-full items-center justify-center rounded-lg bg-[#6543AB] text-base font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button type="submit" disabled={isLoading} loading={isLoading} className="w-full">
             {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
-          </button>
+          </Button>
 
-          <p className="mt-6 text-center text-base text-zinc-500">
+          <p className="mt-6 text-center text-base text-[var(--color-text-secondary)]">
             ¿No tienes cuenta?{" "}
             <button
               type="button"
               onClick={() => setShowRegisterModal(true)}
               disabled={isLoading}
-              className="font-medium text-zinc-900 hover:underline cursor-pointer disabled:opacity-50"
+              className="font-medium text-[var(--color-text-primary)] hover:underline cursor-pointer disabled:opacity-50"
             >
               Regístrate
             </button>
           </p>
         </form>
 
-        <RegisterModal
-          isOpen={showRegisterModal}
-          onClose={() => setShowRegisterModal(false)}
-        />
+        <RegisterModal isOpen={showRegisterModal} onClose={() => setShowRegisterModal(false)} />
       </div>
     </section>
   );

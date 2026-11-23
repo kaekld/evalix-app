@@ -2,29 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AlumnoHeader from "../components/AlumnoHeader";
+import { BaseHeader } from "@/components/ui";
 import PerfilModal from "../components/modals/PerfilModal";
 import CambiarPasswordModal from "../components/modals/CambiarPasswordModal";
-import GroupCard from "../components/groups/GroupCard";
+import { GroupCard, type AlumnoGroup, type Exam } from "@/components/ui";
 import UpcomingExamCard from "../components/exams/UpcomingExamCard";
 import ExamsSidebar from "../components/exams/ExamsSidebar";
-
-interface Exam {
-  id: number;
-  unit: string;
-  date: string;
-  time?: string;
-  status: "upcoming" | "completed";
-}
-
-interface Group {
-  id: number;
-  name: string;
-  code: string;
-  students: string;
-  exams: Exam[];
-  expanded: boolean;
-}
 
 interface User {
   id: string;
@@ -35,34 +18,36 @@ interface User {
   rol: string;
 }
 
-const groupsData: Group[] = [
+const groupsData: AlumnoGroup[] = [
   {
     id: 1,
-    name: "Programación Orientada a Objetos",
-    code: "Grupo A · 24 estudiantes",
-    students: "24 estudiantes",
+    nombre: "Programación Orientada a Objetos",
+    codigo: "Grupo A · 24 estudiantes",
+    categoria: "Programación",
+    estudiantes_count: 24,
     exams: [
-      { id: 1, unit: "Unidad 1", date: "12 NOV 2026", status: "completed" },
+      { id: "1", unit: "Unidad 1", date: "12 NOV 2026", status: "completed" },
     ],
     expanded: false,
   },
   {
     id: 2,
-    name: "Sistemas Programables",
-    code: "Grupo B · 18 estudiantes",
-    students: "18 estudiantes",
+    nombre: "Sistemas Programables",
+    codigo: "Grupo B · 18 estudiantes",
+    categoria: "Sistemas",
+    estudiantes_count: 18,
     exams: [
-      { id: 2, unit: "Unidad 2", date: "20 NOV · 11:00 h", status: "upcoming" },
-      { id: 3, unit: "Unidad 1", date: "15 NOV 2026", status: "completed" },
+      { id: "2", unit: "Unidad 2", date: "20 NOV · 11:00 h", status: "upcoming" },
+      { id: "3", unit: "Unidad 1", date: "15 NOV 2026", status: "completed" },
     ],
     expanded: false,
   },
 ];
 
 export default function AlumnoInicioPage() {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [groups, setGroups] = useState<Group[]>(groupsData);
+  const [groups, setGroups] = useState<AlumnoGroup[]>(groupsData);
   const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const router = useRouter();
@@ -85,6 +70,8 @@ export default function AlumnoInicioPage() {
         }
       } catch {
         // Usuario no autenticado, el middleware redirigirá
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchUser();
@@ -96,7 +83,7 @@ export default function AlumnoInicioPage() {
     return () => window.removeEventListener("user-updated", handleUserUpdated as EventListener);
   }, []);
 
-  const toggleGroup = (groupId: number) => {
+  const toggleGroup = (groupId: number | string) => {
     setGroups(groups.map((g) =>
       g.id === groupId ? { ...g, expanded: !g.expanded } : g
     ));
@@ -117,12 +104,10 @@ export default function AlumnoInicioPage() {
   };
 
   const handleProfile = () => {
-    setUserMenuOpen(false);
     setShowPerfilModal(true);
   };
 
   const handleChangePassword = () => {
-    setUserMenuOpen(false);
     setShowPasswordModal(true);
   };
 
@@ -132,20 +117,29 @@ export default function AlumnoInicioPage() {
     .filter(e => e.status === "upcoming")
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
+  const navigationLinks = [
+    { href: "/alumno/inicio", label: "Inicio", active: true },
+    { href: "/alumno/examenes", label: "Exámenes" },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f6f6fa] flex flex-col font-sans">
-      <AlumnoHeader
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+      <BaseHeader
         user={user}
+        role="ALUMNO"
+        navigationLinks={navigationLinks}
         onProfile={handleProfile}
         onChangePassword={handleChangePassword}
         onLogout={handleLogout}
+        brandColor="purple"
+        isLoading={userLoading}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="font-semibold text-4xl leading-relaxed text-[#232334] tracking-tight">
+          <h1 className="font-semibold text-4xl leading-relaxed text-[var(--color-text-primary)] tracking-tight">
             Tu espacio de aprendizaje
           </h1>
         </div>
@@ -160,7 +154,7 @@ export default function AlumnoInicioPage() {
             {/* Examen por Empezar */}
             {nextUpcomingExam && (
               <UpcomingExamCard
-                subject={groups.find(g => g.exams.some(e => e.id === nextUpcomingExam.id))?.name || "Materia"}
+                subject={groups.find(g => g.exams.some(e => e.id === nextUpcomingExam.id))?.nombre || "Materia"}
                 unit={nextUpcomingExam.unit}
                 questionCount={25}
                 onEnter={() => {}}
@@ -169,7 +163,7 @@ export default function AlumnoInicioPage() {
 
             {/* Grupos */}
             <section>
-              <h2 className="font-semibold text-lg leading-relaxed text-[#232334] mb-4">
+              <h2 className="font-semibold text-lg leading-relaxed text-[var(--color-text-primary)] mb-4">
                 Grupos
               </h2>
               <div className="space-y-4 max-w-3xl">
@@ -177,6 +171,7 @@ export default function AlumnoInicioPage() {
                   <GroupCard
                     key={group.id}
                     group={group}
+                    variant="alumno"
                     onToggle={toggleGroup}
                     getSortedExams={getSortedExams}
                   />

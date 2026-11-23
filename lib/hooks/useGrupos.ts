@@ -6,7 +6,7 @@ export interface Grupo {
   id: string;
   nombre: string;
   codigo: string;
-  materia: string;
+  categoria: string;
   descripcion: string | null;
   activo: boolean;
   creado_en: string;
@@ -19,7 +19,7 @@ export interface Grupo {
 export interface CreateGrupoDTO {
   nombre: string;
   codigo: string;
-  materia: string;
+  categoria: string;
   descripcion?: string;
 }
 

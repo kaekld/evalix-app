@@ -13,7 +13,7 @@ interface GrupoRow {
   id: string;
   nombre: string;
   codigo: string;
-  materia: string;
+  categoria: string;
   descripcion: string | null;
   activo: boolean;
   creado_en: string;
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
         id,
         nombre,
         codigo,
-        materia,
+        categoria,
         descripcion,
         activo,
         creado_en,
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
       id: g.id,
       nombre: g.nombre,
       codigo: g.codigo,
-      materia: g.materia,
+      categoria: g.categoria,
       descripcion: g.descripcion,
       activo: g.activo,
       creado_en: g.creado_en,
@@ -113,10 +113,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { nombre, codigo, materia, descripcion } = body;
+    const { nombre, codigo, categoria, descripcion } = body;
 
-    if (!nombre || !codigo || !materia) {
-      return NextResponse.json({ message: 'Nombre, código y materia son obligatorios' }, { status: 400 });
+    if (!nombre || !codigo || !categoria) {
+      return NextResponse.json({ message: 'Nombre, código y categoría son obligatorios' }, { status: 400 });
     }
 
     // Get docente's institution
@@ -159,11 +159,11 @@ export async function POST(req: Request) {
         institucion_id: institucionId,
         nombre: nombre.trim(),
         codigo: codigo.trim().toUpperCase(),
-        materia: materia.trim(),
+        categoria: categoria.trim(),
         descripcion: descripcion?.trim() || null,
         activo: true,
       })
-      .select('id, nombre, codigo, materia, descripcion, activo, creado_en, actualizado_en, institucion_id')
+      .select('id, nombre, codigo, categoria, descripcion, activo, creado_en, actualizado_en, institucion_id')
       .single();
 
     if (error) {

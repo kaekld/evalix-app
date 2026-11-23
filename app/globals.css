@@ -5,16 +5,29 @@
   --foreground: #232334;
   --color-primary: #6543ab;
   --color-primary-light: #f0eafb;
+  --color-primary-hover: #523691;
   --color-text-primary: #232334;
   --color-text-secondary: #747487;
+  --color-text-muted: #a0a0b0;
   --color-border: #dedee8;
   --color-card-bg: #ffffff;
   --color-exam-card-bg: #e4f7fb;
   --color-exam-btn-bg: #44689e;
+  --color-exam-btn-hover: #3a5a8a;
   --color-group-accent: #95c9a4;
   --color-user-btn-bg: #f6f6fa;
   --color-nav-active: #f0eafb;
   --color-divider: #dedee8;
+  --color-danger: #ad3040;
+  --color-danger-hover: #8b2635;
+  --color-danger-bg: #fef2f2;
+  --color-warning: #9a4a0a;
+  --color-warning-hover: #7a3d08;
+  --color-warning-bg: #fef3c7;
+  --color-success: #2a5a3a;
+  --color-success-bg: #e5f2e8;
+  --color-focus-ring: var(--color-primary);
+  --color-skeleton: #e0e0e0;
 }
 
 @theme inline {
@@ -22,25 +35,30 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--color-primary);
   --color-primary-light: var(--color-primary-light);
+  --color-primary-hover: var(--color-primary-hover);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
   --color-border: var(--color-border);
   --color-card-bg: var(--color-card-bg);
   --color-exam-card-bg: var(--color-exam-card-bg);
   --color-exam-btn-bg: var(--color-exam-btn-bg);
+  --color-exam-btn-hover: var(--color-exam-btn-hover);
   --color-group-accent: var(--color-group-accent);
   --color-user-btn-bg: var(--color-user-btn-bg);
   --color-nav-active: var(--color-nav-active);
   --color-divider: var(--color-divider);
+  --color-danger: var(--color-danger);
+  --color-danger-hover: var(--color-danger-hover);
+  --color-danger-bg: var(--color-danger-bg);
+  --color-warning: var(--color-warning);
+  --color-warning-hover: var(--color-warning-hover);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-skeleton: var(--color-skeleton);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -62,4 +80,15 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.45s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .animate-ping {
+    animation: none !important;
+    transition: none !important;
+  }
 }

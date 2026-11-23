@@ -30,7 +30,7 @@ async function getDocenteIdFromToken(req: Request): Promise<string | null> {
 async function verifyGrupoOwnership(grupoId: string, docenteId: string) {
   const { data: grupo, error } = await supabase
     .from('grupo')
-    .select('id, docente_id, nombre, codigo, materia, descripcion, activo, creado_en, actualizado_en, institucion_id')
+    .select('id, docente_id, nombre, codigo, categoria, descripcion, activo, creado_en, actualizado_en, institucion_id')
     .eq('id', grupoId)
     .eq('docente_id', docenteId)
     .maybeSingle();
@@ -96,7 +96,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       .from('grupo')
       .update(updates)
       .eq('id', id)
-      .select('id, nombre, codigo, materia, descripcion, activo, creado_en, actualizado_en, institucion_id')
+      .select('id, nombre, codigo, categoria, descripcion, activo, creado_en, actualizado_en, institucion_id')
       .single();
 
     if (updateError) {

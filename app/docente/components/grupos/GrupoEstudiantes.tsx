@@ -10,7 +10,7 @@ interface Grupo {
   id: string;
   nombre: string;
   codigo: string;
-  materia: string;
+  categoria: string;
 }
 
 interface Estudiante {
