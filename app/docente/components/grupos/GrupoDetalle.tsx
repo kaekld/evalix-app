@@ -93,7 +93,7 @@ export default function GrupoDetalle({ grupo }: GrupoDetalleProps) {
       const err = await res.json();
       throw new Error(err.message || "Error al eliminar grupo");
     }
-    router.push("/docente/inicio");
+    router.push("/docente/grupos");
   };
 
   return (

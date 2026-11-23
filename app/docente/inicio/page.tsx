@@ -217,7 +217,6 @@ export default function DocenteInicioPage() {
                   key={group.id}
                   group={mapToDocenteGroup(group)}
                   variant="docente"
-                  onToggle={() => {}}
                   onEdit={(g) => handleEditGroup(g)}
                   onDelete={(id) => handleDeleteGroup(id)}
                   onViewGroup={(id) => handleViewGroup(id)}

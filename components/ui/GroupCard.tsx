@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { MoreVertical, Edit, Trash2, Users, FileText, ChevronDown } from "lucide-react";
+import { MoreVertical, Edit, Trash2, Users, FileText } from "lucide-react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSeparator } from "./Dropdown";
-import { Badge, StatusBadge } from "./Badge";
 import { Card } from "./Card";
 import { Button } from "./Button";
 
@@ -41,7 +39,6 @@ type GroupVariant = "docente" | "alumno";
 export interface GroupCardProps {
   group: DocenteGroup | AlumnoGroup;
   variant: GroupVariant;
-  onToggle?: (groupId: string | number) => void;
   onEdit?: (group: DocenteGroup) => void;
   onDelete?: (groupId: string | number) => void;
   onViewGroup?: (groupId: string | number) => void;
@@ -61,7 +58,6 @@ const statusStyles: Record<Exam["status"], { bg: string; badge: string; label: s
 export function GroupCard({
   group,
   variant,
-  onToggle,
   onEdit,
   onDelete,
   onViewGroup,
@@ -70,7 +66,6 @@ export function GroupCard({
   onViewConfiguracion,
   getSortedExams,
 }: GroupCardProps) {
-  const router = useRouter();
   const isAlumno = variant === "alumno";
   const isDocente = variant === "docente";
   const alumnoGroup = group as AlumnoGroup;
@@ -102,36 +97,20 @@ export function GroupCard({
 
   const sortedExams = isAlumno && getSortedExams ? getSortedExams(alumnoGroup.exams) : [];
 
-  const toggleExpanded = () => {
-    onToggle?.(group.id);
-  };
-
   return (
     <Card variant="bordered" padding="none" className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
       {/* Group Header */}
       <div className="relative h-14 bg-[var(--color-background)] border-b border-[var(--color-border)] px-4 flex items-center justify-between">
         <div className="absolute left-0 top-0 w-1 h-full bg-[var(--color-group-accent)]" />
-        <button
-          onClick={toggleExpanded}
-          className="pl-4 flex-1 min-w-0 text-left"
-          aria-expanded={group.expanded}
-          aria-controls={`group-content-${group.id}`}
-        >
+        <div className="pl-4 flex-1 min-w-0 text-left">
           <p className="font-semibold text-base leading-relaxed text-[var(--color-text-primary)] truncate">
             {group.nombre}
           </p>
           <p className="font-normal text-xs leading-relaxed text-[var(--color-text-secondary)] mt-0.5 truncate">
             {group.codigo} · {group.categoria}
           </p>
-        </button>
+        </div>
         <div className="flex items-center gap-1">
-          <button
-            onClick={toggleExpanded}
-            className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-white transition-colors"
-            aria-label={group.expanded ? "Colapsar" : "Expandir"}
-          >
-            <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${group.expanded ? "rotate-180" : ""}`} />
-          </button>
           <Dropdown
             trigger={
               <DropdownTrigger

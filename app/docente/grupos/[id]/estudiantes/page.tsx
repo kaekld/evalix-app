@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 import DocenteHeaderWrapper from "@/app/docente/components/DocenteHeaderWrapper";
 import GrupoEstudiantes from "@/app/docente/components/grupos/GrupoEstudiantes";
 
@@ -34,27 +35,39 @@ async function getGrupo(id: string, docenteId: string) {
   return data;
 }
 
+interface JWTPayload {
+  sub: string;
+  email: string;
+  nombre_completo?: string;
+  institucion?: string | null;
+  institucion_id?: string | null;
+  rol?: string;
+}
+
 async function getUser() {
   const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+  const authCookie = cookieStore.get('auth_token');
+  const token = authCookie?.value;
 
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  if (!token) return null;
+
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'evalix_secret_key_2026');
+
+  try {
+    const { payload } = await jwtVerify<JWTPayload>(token, secret);
+    return {
+      id: payload.sub,
+      email: payload.email,
+      user_metadata: {
+        nombre_completo: payload.nombre_completo,
+        institucion: payload.institucion,
+        institucion_id: payload.institucion_id,
+        rol: payload.rol,
+      },
+    };
+  } catch {
+    return null;
+  }
 }
 
 export default async function GrupoEstudiantesPage({ params }: { params: Promise<{ id: string }> }) {

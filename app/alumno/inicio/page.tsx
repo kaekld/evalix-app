@@ -83,12 +83,6 @@ export default function AlumnoInicioPage() {
     return () => window.removeEventListener("user-updated", handleUserUpdated as EventListener);
   }, []);
 
-  const toggleGroup = (groupId: number | string) => {
-    setGroups(groups.map((g) =>
-      g.id === groupId ? { ...g, expanded: !g.expanded } : g
-    ));
-  };
-
   const getSortedExams = (exams: Exam[]) => {
     return [...exams].sort((a, b) => {
       if (a.status === "upcoming" && b.status === "completed") return -1;
@@ -172,7 +166,6 @@ export default function AlumnoInicioPage() {
                     key={group.id}
                     group={group}
                     variant="alumno"
-                    onToggle={toggleGroup}
                     getSortedExams={getSortedExams}
                   />
                 ))}
