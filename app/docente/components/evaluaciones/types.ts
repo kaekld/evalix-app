@@ -36,6 +36,23 @@ export interface Opcion {
   esCorrecta: boolean;
 }
 
+// API payload types (snake_case for backend)
+export interface OpcionInput {
+  id: string;
+  pregunta_id: string;
+  texto: string;
+  es_correcta: boolean;
+}
+
+export interface PreguntaInput {
+  tipo: "cerrada" | "abierta";
+  enunciado: string;
+  imagen_url?: string;
+  tiempo_segundos: number;
+  orden: number;
+  opciones: OpcionInput[];
+}
+
 export const statuses = [
   { value: "pendiente", label: "Pendientes" },
   { value: "publicada", label: "Publicadas" },

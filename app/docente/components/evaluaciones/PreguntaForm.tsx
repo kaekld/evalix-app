@@ -1,29 +1,27 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Modal, Input, Textarea, Button } from "@/components/ui";
+import { Modal, Input, Textarea, Button, Select } from "@/components/ui";
 import { Trash2, Plus } from "lucide-react";
-import { Pregunta, Opcion } from "./types";
-
-type OpcionInput = Omit<Opcion, "id" | "preguntaId">;
+import { Pregunta, Opcion, OpcionInput, PreguntaInput } from "./types";
 
 interface PreguntaFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (pregunta: Omit<Pregunta, "id" | "evaluacionId"> & { opciones: OpcionInput[] }) => void;
+  onSave: (pregunta: PreguntaInput) => void;
   initialData?: Pregunta | null;
   isLoading?: boolean;
 }
 
-function getInitialOpciones(initialData?: Pregunta | null): Omit<Opcion, "id" | "preguntaId">[] {
+function getInitialOpciones(initialData?: Pregunta | null): Omit<OpcionInput, "id" | "pregunta_id">[] {
   if (initialData?.opciones) {
-    return initialData.opciones.map((o) => ({ texto: o.texto, esCorrecta: o.esCorrecta }));
+    return initialData.opciones.map((o) => ({ texto: o.texto, es_correcta: o.esCorrecta }));
   }
   return [
-    { texto: "", esCorrecta: false },
-    { texto: "", esCorrecta: false },
-    { texto: "", esCorrecta: false },
-    { texto: "", esCorrecta: false },
+    { texto: "", es_correcta: false },
+    { texto: "", es_correcta: false },
+    { texto: "", es_correcta: false },
+    { texto: "", es_correcta: false },
   ];
 }
 
@@ -34,10 +32,11 @@ export default function PreguntaForm({
   initialData,
   isLoading = false,
 }: PreguntaFormProps) {
+  const [tipo, setTipo] = useState<"cerrada" | "abierta">("cerrada");
   const [enunciado, setEnunciado] = useState("");
   const [tiempoSegundos, setTiempoSegundos] = useState(60);
   const [imagenUrl, setImagenUrl] = useState("");
-  const [opciones, setOpciones] = useState<Omit<Opcion, "id" | "preguntaId">[]>(() => getInitialOpciones(initialData));
+  const [opciones, setOpciones] = useState<Omit<OpcionInput, "id" | "pregunta_id">[]>(() => getInitialOpciones(initialData));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState("");
 
@@ -52,11 +51,13 @@ export default function PreguntaForm({
   useEffect(() => {
     if (!isOpen) return;
     if (initialData) {
+      setTipo(initialData.tipo || "cerrada");
       setEnunciado(initialData.enunciado);
       setTiempoSegundos(initialData.tiempoSegundos);
       setImagenUrl(initialData.imagenUrl || "");
       setOpciones(getInitialOpciones(initialData));
     } else {
+      setTipo("cerrada");
       setEnunciado("");
       setTiempoSegundos(60);
       setImagenUrl("");
@@ -80,7 +81,7 @@ export default function PreguntaForm({
   }, []);
 
   const handleOpcionChange = useCallback(
-    (index: number, field: "texto" | "esCorrecta", value: string | boolean) => {
+    (index: number, field: "texto" | "es_correcta", value: string | boolean) => {
       setOpciones((prev) =>
         prev.map((o, i) => (i === index ? { ...o, [field]: value } : o))
       );
@@ -91,7 +92,7 @@ export default function PreguntaForm({
 
   const addOpcion = useCallback(() => {
     if (opciones.length < 6) {
-      setOpciones((prev) => [...prev, { texto: "", esCorrecta: false }]);
+      setOpciones((prev) => [...prev, { texto: "", es_correcta: false }]);
     }
   }, [opciones.length]);
 
@@ -106,17 +107,19 @@ export default function PreguntaForm({
     if (!enunciado.trim()) newErrors.enunciado = "El enunciado es requerido";
     if (tiempoSegundos < 10) newErrors.tiempo = "Mínimo 10 segundos";
 
-    let correctCount = 0;
-    opciones.forEach((o, i) => {
-      if (!o.texto.trim()) newErrors[`opcion-${i}`] = "Texto requerido";
-      if (o.esCorrecta) correctCount++;
-    });
-    if (correctCount === 0) newErrors.correcta = "Debe haber al menos una respuesta correcta";
-    if (correctCount > 1) newErrors.correcta = "Solo una respuesta correcta permitida";
+    if (tipo === "cerrada") {
+      let correctCount = 0;
+      opciones.forEach((o, i) => {
+        if (!o.texto.trim()) newErrors[`opcion-${i}`] = "Texto requerido";
+        if (o.es_correcta) correctCount++;
+      });
+      if (correctCount === 0) newErrors.correcta = "Debe haber al menos una respuesta correcta";
+      if (correctCount > 1) newErrors.correcta = "Solo una respuesta correcta permitida";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [enunciado, tiempoSegundos, opciones]);
+  }, [enunciado, tiempoSegundos, opciones, tipo]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -127,23 +130,25 @@ export default function PreguntaForm({
       setApiError("");
       try {
         await onSave({
-          tipo: "cerrada",
+          tipo,
           enunciado: enunciado.trim(),
-          imagenUrl: imagenUrl.trim() || undefined,
-          tiempoSegundos,
+          imagen_url: imagenUrl.trim() || undefined,
+          tiempo_segundos: tiempoSegundos,
           orden: currentInitialData?.orden || 0,
-          opciones: opciones.map((o, i) => ({
-            id: currentInitialData?.opciones?.[i]?.id || `opt-${Date.now()}-${i}`,
-            preguntaId: currentInitialData?.id || "",
-            texto: o.texto.trim(),
-            esCorrecta: o.esCorrecta,
-          })),
+          opciones: tipo === "cerrada"
+            ? opciones.map((o, i) => ({
+                id: currentInitialData?.opciones?.[i]?.id || `opt-${Date.now()}-${i}`,
+                pregunta_id: currentInitialData?.id || "",
+                texto: o.texto.trim(),
+                es_correcta: o.es_correcta,
+              }))
+            : [],
         });
       } catch {
         setApiError("Error al guardar la pregunta. Intenta de nuevo.");
       }
     },
-    [enunciado, tiempoSegundos, imagenUrl, opciones, onSave, validate]
+    [enunciado, tiempoSegundos, imagenUrl, opciones, tipo, onSave, validate]
   );
 
   const handleClose = useCallback(() => {
@@ -200,6 +205,20 @@ export default function PreguntaForm({
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <Select
+            label="Tipo de pregunta"
+            id="tipo"
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value as "cerrada" | "abierta")}
+            disabled={isLoading}
+            options={[
+              { value: "cerrada", label: "Opción única (calificación automática)" },
+              { value: "abierta", label: "Respuesta abierta (revisión manual)" },
+            ]}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Tiempo por pregunta (segundos)"
             id="tiempoSegundos"
@@ -216,44 +235,45 @@ export default function PreguntaForm({
           />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm text-[#232334]">Opciones de respuesta</h4>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={addOpcion}
-              disabled={isLoading || opciones.length >= 6}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Añadir opción
-            </Button>
-          </div>
+        {tipo === "cerrada" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm text-[#232334]">Opciones de respuesta</h4>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={addOpcion}
+                disabled={isLoading || opciones.length >= 6}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Añadir opción
+              </Button>
+            </div>
 
-          {opciones.map((opcion, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="correcta"
-                checked={opcion.esCorrecta}
-                onChange={() => handleOpcionChange(index, "esCorrecta", true)}
-                className="h-4 w-4 text-[#6543ab] focus:ring-[#6543ab] cursor-pointer"
-                disabled={isLoading}
-              />
-              <Input
-                label=""
-                id={`opcion-${index}`}
-                type="text"
-                placeholder={`Opción ${index + 1}`}
-                value={opcion.texto}
-                onChange={(e) => handleOpcionChange(index, "texto", e.target.value)}
-                disabled={isLoading}
-                error={errors[`opcion-${index}`]}
-                className="flex-1"
-              />
-              {opciones.length > 2 && (
-                <Button
+            {opciones.map((opcion, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="correcta"
+                  checked={opcion.es_correcta}
+                  onChange={() => handleOpcionChange(index, "es_correcta", true)}
+                  className="h-4 w-4 text-[#6543ab] focus:ring-[#6543ab] cursor-pointer"
+                  disabled={isLoading}
+                />
+                <Input
+                  label=""
+                  id={`opcion-${index}`}
+                  type="text"
+                  placeholder={`Opción ${index + 1}`}
+                  value={opcion.texto}
+                  onChange={(e) => handleOpcionChange(index, "texto", e.target.value)}
+                  disabled={isLoading}
+                  error={errors[`opcion-${index}`]}
+                  className="flex-1"
+                />
+                {opciones.length > 2 && (
+                  <Button
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -270,7 +290,8 @@ export default function PreguntaForm({
           {errors.correcta && (
             <p className="text-sm text-red-600 ml-6">{errors.correcta}</p>
           )}
-        </div>
+          </div>
+        )}
       </form>
     </Modal>
   );

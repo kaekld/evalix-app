@@ -54,8 +54,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const body = await req.json();
     const { tipo, enunciado, imagen_url, tiempo_segundos, orden, opciones } = body;
 
-    if (!tipo || !enunciado || !opciones || !Array.isArray(opciones)) {
-      return NextResponse.json({ message: 'Tipo, enunciado y opciones son obligatorios' }, { status: 400 });
+    if (!tipo || !enunciado) {
+      return NextResponse.json({ message: 'Tipo y enunciado son obligatorios' }, { status: 400 });
     }
 
     interface OpcionInput {
@@ -65,6 +65,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     if (tipo === 'cerrada') {
+      if (!opciones || !Array.isArray(opciones) || opciones.length < 2) {
+        return NextResponse.json({ message: 'Las preguntas cerradas requieren al menos 2 opciones' }, { status: 400 });
+      }
       const correctCount = opciones.filter((o: OpcionInput) => o.es_correcta).length;
       if (correctCount !== 1) {
         return NextResponse.json({ message: 'Debe haber exactamente una respuesta correcta' }, { status: 400 });
@@ -101,23 +104,29 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ message: pregError.message }, { status: 400 });
     }
 
-    // Insert options
-    const opcionesData = opciones.map((o: OpcionInput, index: number) => ({
-      pregunta_id: pregunta.id,
-      texto: o.texto.trim(),
-      es_correcta: o.es_correcta || false,
-      orden: o.orden ?? index,
-    }));
+    let opcionesInsertadas = null;
 
-    const { data: opcionesInsertadas, error: optError } = await supabase
-      .from('opcion')
-      .insert(opcionesData)
-      .select('id, texto, es_correcta, orden');
+    // Insert options only for closed questions
+    if (tipo === 'cerrada' && opciones && opciones.length > 0) {
+      const opcionesData = opciones.map((o: OpcionInput, index: number) => ({
+        pregunta_id: pregunta.id,
+        texto: o.texto.trim(),
+        es_correcta: o.es_correcta || false,
+        orden: o.orden ?? index,
+      }));
 
-    if (optError) {
-      // Rollback question
-      await supabase.from('pregunta').delete().eq('id', pregunta.id);
-      return NextResponse.json({ message: optError.message }, { status: 400 });
+      const { data, error: optError } = await supabase
+        .from('opcion')
+        .insert(opcionesData)
+        .select('id, texto, es_correcta, orden');
+
+      if (optError) {
+        // Rollback question
+        await supabase.from('pregunta').delete().eq('id', pregunta.id);
+        return NextResponse.json({ message: optError.message }, { status: 400 });
+      }
+
+      opcionesInsertadas = data;
     }
 
     return NextResponse.json({

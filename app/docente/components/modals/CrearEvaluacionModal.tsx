@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Modal, Input, Select, Textarea, Button } from "@/components/ui";
 
 interface Grupo {
@@ -26,6 +26,9 @@ export default function CrearEvaluacionModal({ isOpen, onClose, onCreate, grupos
   const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const singleGroup = grupos.length === 1 ? grupos[0] : null;
+
+  // Auto-select single group
   const clearError = useCallback((field: string) => {
     setErrors((prev) => {
       if (prev[field]) {
@@ -62,15 +65,21 @@ export default function CrearEvaluacionModal({ isOpen, onClose, onCreate, grupos
     setDescripcion(e.target.value);
   }, []);
 
+  useEffect(() => {
+    if (singleGroup && !grupoId) {
+      setGrupoId(singleGroup.id);
+    }
+  }, [singleGroup, grupoId]);
+
   const validate = useCallback(() => {
     const newErrors: Record<string, string> = {};
     if (!titulo.trim()) newErrors.titulo = "Título de la evaluación es requerido";
-    if (!grupoId) newErrors.grupoId = "Debe seleccionar un grupo";
+    if (!singleGroup && !grupoId) newErrors.grupoId = "Debe seleccionar un grupo";
     if (!fecha) newErrors.fecha = "Fecha es requerida";
     if (!hora) newErrors.hora = "Hora es requerida";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [titulo, grupoId, fecha, hora]);
+  }, [titulo, grupoId, fecha, hora, singleGroup]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,16 +156,28 @@ export default function CrearEvaluacionModal({ isOpen, onClose, onCreate, grupos
           error={errors.titulo}
         />
 
-        <Select
-          label="Grupo"
-          id="grupoId"
-          value={grupoId}
-          onChange={handleGrupoChange}
-          disabled={isLoading}
-          placeholder="Selecciona un grupo"
-          options={grupos.map((g) => ({ value: g.id, label: `${g.nombre} (${g.codigo})` }))}
-          error={errors.grupoId}
-        />
+        {singleGroup ? (
+          <div className="bg-[#f6f6fa] border border-[#dedee8] rounded-lg p-4">
+            <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
+              Grupo
+            </label>
+            <div className="flex items-center gap-2 text-sm text-zinc-900">
+              <span className="font-medium">{singleGroup.nombre}</span>
+              <span className="text-zinc-500">({singleGroup.codigo})</span>
+            </div>
+          </div>
+        ) : (
+          <Select
+            label="Grupo"
+            id="grupoId"
+            value={grupoId}
+            onChange={handleGrupoChange}
+            disabled={isLoading}
+            placeholder="Selecciona un grupo"
+            options={grupos.map((g) => ({ value: g.id, label: `${g.nombre} (${g.codigo})` }))}
+            error={errors.grupoId}
+          />
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
