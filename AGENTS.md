@@ -98,3 +98,7 @@ Before the final response, run one reporting pass. If candidates remain, from th
 - Mantén la lógica del motor de examen desacoplada y verificable (estados de tiempo, bloqueo por pregunta, validación de dispositivo de escritorio y manejo de pérdida de conexión).
 - Al integrar editores o rastreadores de telemetría (como Monaco), centraliza los eventos en un módulo/servicio claro para facilitar auditoría y pruebas.
 - Evita agregar dependencias innecesarias y verifica que el build de Next.js pase sin errores de tipos ni lint antes de dar una tarea por cerrada.
+
+## Idioma y comunicación
+- Responde **siempre en español** en todos tus mensajes, explicaciones, resúmenes y comentarios de código, incluso si el prompt incluye nombres de archivos, rutas, variables o términos técnicos en inglés.
+- Mantén las explicaciones breves y directas, sin cambiar el idioma a inglés en ningún turno.

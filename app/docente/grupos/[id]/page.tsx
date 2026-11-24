@@ -28,7 +28,8 @@ async function getGrupo(id: string, docenteId: string) {
     .from("grupo")
     .select(`
       *,
-      grupo_estudiante!inner(count)
+      grupo_estudiante!inner(count),
+      evaluacion(count)
     `)
     .eq("id", id)
     .eq("docente_id", docenteId)
@@ -39,6 +40,7 @@ async function getGrupo(id: string, docenteId: string) {
   return {
     ...data,
     estudiantes_count: data.grupo_estudiante?.[0]?.count ?? 0,
+    evaluaciones_count: data.evaluacion?.[0]?.count ?? 0,
   };
 }
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Search, Users, Trash2, UserPlus, Mail, User, Calendar } from "lucide-react";
 import InscribirEstudiantesModal from "@/app/docente/components/modals/InscribirEstudiantesModal";
 import ConfirmDeleteModal from "@/app/docente/components/modals/ConfirmDeleteModal";
+import StudentDetailModal from "@/app/docente/components/modals/StudentDetailModal";
 
 interface Grupo {
   id: string;
@@ -40,6 +41,8 @@ export default function GrupoEstudiantes({ grupo }: GrupoEstudiantesProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [estudianteToDelete, setEstudianteToDelete] = useState<Estudiante | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
 
   const fetchEstudiantes = useCallback(async () => {
     setLoading(true);
@@ -94,8 +97,17 @@ export default function GrupoEstudiantes({ grupo }: GrupoEstudiantesProps) {
     }
   };
 
-  const handleEnrollSuccess = () => {
-    fetchEstudiantes();
+  const handleEnroll = async (alumnoIds: string[]) => {
+    const res = await fetch(`/api/docente/grupos/${grupo.id}/estudiantes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ alumno_ids: alumnoIds }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Error al inscribir estudiantes");
+    }
+    await fetchEstudiantes();
     setShowInscribirModal(false);
   };
 
@@ -174,7 +186,11 @@ export default function GrupoEstudiantes({ grupo }: GrupoEstudiantesProps) {
             {filteredEstudiantes.map((estudiante) => (
               <div
                 key={estudiante.id}
-                className="flex items-center gap-4 p-4 hover:bg-[#f6f6fa] transition-colors"
+                className="flex items-center gap-4 p-4 hover:bg-[#f6f6fa] transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedEstudiante(estudiante);
+                  setShowDetailModal(true);
+                }}
               >
                 <div className="w-10 h-10 rounded-full bg-[#f0eafb] flex items-center justify-center flex-shrink-0">
                   <User className="h-5 w-5 text-[#6543ab]" />
@@ -219,7 +235,7 @@ export default function GrupoEstudiantes({ grupo }: GrupoEstudiantesProps) {
       <InscribirEstudiantesModal
         isOpen={showInscribirModal}
         onClose={() => setShowInscribirModal(false)}
-        onEnroll={handleEnrollSuccess}
+        onEnroll={handleEnroll}
         grupoId={grupo.id}
       />
       <ConfirmDeleteModal
@@ -233,6 +249,19 @@ export default function GrupoEstudiantes({ grupo }: GrupoEstudiantesProps) {
         message={`¿Estás seguro de que quieres desinscribir a "${estudianteToDelete?.alumno.nombre_completo}" del grupo "${grupo.nombre}"? El estudiante perderá acceso a las evaluaciones de este grupo.`}
         confirmText="Desinscribir"
         variant="warning"
+      />
+      <StudentDetailModal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        alumnoId={selectedEstudiante?.alumno.id || ''}
+        alumnoInfo={{
+          id: selectedEstudiante?.alumno.id || '',
+          matricula: selectedEstudiante?.alumno.matricula || '',
+          nombre_completo: selectedEstudiante?.alumno.nombre_completo || '',
+          correo: selectedEstudiante?.alumno.correo || '',
+          activo: selectedEstudiante?.activo ?? true,
+          grupos: [{ id: grupo.id, nombre: grupo.nombre, codigo: grupo.codigo }],
+        }}
       />
     </div>
   );

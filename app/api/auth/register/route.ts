@@ -151,7 +151,22 @@ export async function POST(req: Request) {
       rol: user.rol,
     };
 
-    const access_token = await new SignJWT({ sub: safeUser.id, email: safeUser.correo, rol: safeUser.rol })
+    // Fetch institution name for JWT
+    const { data: institucionData } = await supabase
+      .from('institucion')
+      .select('nombre')
+      .eq('id', user.institucion_id)
+      .maybeSingle();
+    const institucion = institucionData?.nombre ?? null;
+
+    const access_token = await new SignJWT({
+      sub: safeUser.id,
+      email: safeUser.correo,
+      rol: safeUser.rol,
+      nombre_completo: safeUser.nombre_completo,
+      institucion,
+      institucion_id: safeUser.institucion_id,
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('24h')
       .sign(secret);

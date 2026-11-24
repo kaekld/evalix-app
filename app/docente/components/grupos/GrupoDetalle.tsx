@@ -19,6 +19,7 @@ interface Grupo {
   actualizado_en: string;
   institucion_id: string;
   estudiantes_count: number;
+  evaluaciones_count?: number;
 }
 
 interface GrupoDetalleProps {
@@ -177,7 +178,7 @@ export default function GrupoDetalle({ grupo }: GrupoDetalleProps) {
           </div>
           <div>
             <p className="font-medium text-sm text-zinc-900">Evaluaciones</p>
-            <p className="text-2xl font-bold text-zinc-900">0</p>
+            <p className="text-2xl font-bold text-zinc-900">{grupo.evaluaciones_count ?? 0}</p>
           </div>
         </Link>
 

@@ -51,11 +51,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Credenciales inválidas' }, { status: 401 });
     }
 
-    const access_token = await new SignJWT({ sub: user.id, email: user.correo, rol: user.rol, nombre_completo: user.nombre_completo })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('24h')
-      .sign(secret);
-
     const institucionRelacion = user.institucion as
       | { nombre: string }
       | { nombre: string }[]
@@ -63,6 +58,18 @@ export async function POST(req: Request) {
     const institucion = Array.isArray(institucionRelacion)
       ? institucionRelacion[0]?.nombre ?? null
       : institucionRelacion?.nombre ?? null;
+
+    const access_token = await new SignJWT({
+      sub: user.id,
+      email: user.correo,
+      rol: user.rol,
+      nombre_completo: user.nombre_completo,
+      institucion,
+      institucion_id: user.institucion_id,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime('24h')
+      .sign(secret);
 
     const response = NextResponse.json({
       user: {

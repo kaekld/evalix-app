@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import { BaseHeader } from "@/components/ui";
 
 interface User {
@@ -14,16 +16,31 @@ interface User {
 
 interface DocenteHeaderWrapperProps {
   user: User | null;
+  isLoading?: boolean;
 }
 
-const navigationLinks = [
+const navigationLinksBase = [
   { href: "/docente/inicio", label: "Inicio" },
   { href: "/docente/evaluaciones", label: "Evaluaciones" },
   { href: "/docente/estudiantes", label: "Estudiantes" },
 ];
 
-export default function DocenteHeaderWrapper({ user }: DocenteHeaderWrapperProps) {
+export default function DocenteHeaderWrapper({ user, isLoading = false }: DocenteHeaderWrapperProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [loading, setLoading] = useState(isLoading);
+
+  // Sync loading state with prop changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setLoading(isLoading); }, [isLoading]);
+
+  // Determine active link based on current pathname
+  const navigationLinks = useMemo(() => {
+    return navigationLinksBase.map((link) => ({
+      ...link,
+      active: pathname === link.href || pathname.startsWith(link.href + "/"),
+    }));
+  }, [pathname]);
 
   const handleProfile = () => {
     window.dispatchEvent(new CustomEvent("open-perfil-modal"));
@@ -48,6 +65,7 @@ export default function DocenteHeaderWrapper({ user }: DocenteHeaderWrapperProps
       onChangePassword={handleChangePassword}
       onLogout={handleLogout}
       brandColor="purple"
+      isLoading={loading || !user}
     />
   );
 }

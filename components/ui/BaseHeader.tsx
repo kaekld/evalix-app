@@ -97,13 +97,19 @@ export function BaseHeader({
             <Link href="/" className="font-bold text-2xl leading-relaxed truncate" style={{ color: colors.logo.replace("text-", "") }}>
               Evalix
             </Link>
-            {isLoading ? (
-              <div className="h-3 w-32 animate-pulse bg-[var(--color-skeleton)] rounded" />
-            ) : user?.institucion ? (
-              <span className="font-medium text-xs leading-relaxed text-[var(--color-text-secondary)] truncate">
-                {user.institucion}
-              </span>
-            ) : null}
+            <div className="h-4 flex items-center">
+              {isLoading ? (
+                <div className="h-3 w-32 animate-pulse bg-[var(--color-skeleton)] rounded" />
+              ) : user?.institucion ? (
+                <span className="font-medium text-xs leading-relaxed text-[var(--color-text-secondary)] truncate">
+                  {user.institucion}
+                </span>
+              ) : (
+                <span className="invisible font-medium text-xs leading-relaxed text-[var(--color-text-secondary)] truncate">
+                  Institución
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Center: Tabs (Desktop) */}
