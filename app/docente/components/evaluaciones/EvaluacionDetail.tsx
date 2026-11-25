@@ -2,12 +2,14 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Evaluacion, Grupo, Pregunta, Opcion } from "./types";
 import ConfiguracionTab from "./ConfiguracionTab";
 import ExamenTab from "./ExamenTab";
 import StatusBadge from "./StatusBadge";
+import ConfirmActionModal from "@/app/docente/components/modals/ConfirmActionModal";
+import ConfirmDeleteModal from "@/app/docente/components/modals/ConfirmDeleteModal";
 
 interface EvaluacionDetailProps {
   initialEvaluacion: Evaluacion;
@@ -19,11 +21,39 @@ export default function EvaluacionDetail({ initialEvaluacion, grupos }: Evaluaci
   const [evaluacion, setEvaluacion] = useState<Evaluacion>(initialEvaluacion);
   const [activeTab, setActiveTab] = useState<"configuracion" | "examen" | "resultados">("configuracion");
   const [isSaving, setIsSaving] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const apiBase = `/api/docente/evaluaciones/${evaluacion.id}`;
 
+  const handleDelete = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(apiBase, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Error al eliminar");
+      }
+      router.back();
+    } catch {
+      throw new Error("Error al eliminar");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [apiBase, router]);
+
   const handleSaveConfig = useCallback(
-    async (data: Partial<Evaluacion>) => {
+    async (data: {
+      titulo?: string;
+      grupo_id?: string;
+      fecha_inicio?: string;
+      fecha_fin?: string;
+      estado?: "pendiente" | "publicada" | "finalizada";
+      descripcion?: string;
+      tiempo_examen?: number;
+      orden_aleatorio?: boolean;
+    }) => {
       setIsSaving(true);
       try {
         const res = await fetch(apiBase, {
@@ -36,7 +66,18 @@ export default function EvaluacionDetail({ initialEvaluacion, grupos }: Evaluaci
           throw new Error(err.message || "Error al guardar");
         }
         const updated = await res.json();
-        setEvaluacion((prev) => ({ ...prev, ...updated }));
+        // Map snake_case API response to camelCase frontend type
+        // fecha must be ISO format (YYYY-MM-DD) for <input type="date">
+        const fechaISO = updated.fecha_inicio ? updated.fecha_inicio.split("T")[0] : "";
+        const mapped = {
+          ...updated,
+          status: updated.estado,
+          tiempoExamen: updated.tiempo_examen,
+          ordenAleatorio: updated.orden_aleatorio,
+          fecha: fechaISO,
+          hora: updated.fecha_inicio ? new Date(updated.fecha_inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "",
+        };
+        setEvaluacion((prev) => ({ ...prev, ...mapped }));
       } catch {
         throw new Error("Error al guardar");
       } finally {
@@ -149,16 +190,22 @@ export default function EvaluacionDetail({ initialEvaluacion, grupos }: Evaluaci
     router.back();
   };
 
-  const handlePublish = useCallback(async () => {
-    if (confirm("¿Publicar esta evaluación? Los alumnos podrán verla y responderla en el horario indicado.")) {
-      await handleSaveConfig({ status: "publicada" });
-    }
+  const handlePublish = useCallback(() => {
+    setShowPublishModal(true);
+  }, []);
+
+  const handleConfirmPublish = useCallback(async () => {
+    await handleSaveConfig({ estado: "publicada" });
+    setShowPublishModal(false);
   }, [handleSaveConfig]);
 
-  const handleFinalize = useCallback(async () => {
-    if (confirm("¿Finalizar esta evaluación? Ya no se podrán enviar respuestas.")) {
-      await handleSaveConfig({ status: "finalizada" });
-    }
+  const handleFinalize = useCallback(() => {
+    setShowFinalizeModal(true);
+  }, []);
+
+  const handleConfirmFinalize = useCallback(async () => {
+    await handleSaveConfig({ estado: "finalizada" });
+    setShowFinalizeModal(false);
   }, [handleSaveConfig]);
 
   return (
@@ -190,6 +237,7 @@ export default function EvaluacionDetail({ initialEvaluacion, grupos }: Evaluaci
               Finalizar
             </Button>
           )}
+          <Button variant="ghost" onClick={() => setShowDeleteModal(true)} disabled={isSaving} icon={<Trash2 className="h-4 w-4" />} aria-label="Eliminar evaluación" />
         </div>
       </div>
 
@@ -247,6 +295,37 @@ export default function EvaluacionDetail({ initialEvaluacion, grupos }: Evaluaci
           )}
         </div>
       </div>
+
+      {/* Confirmation Modals */}
+      <ConfirmActionModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        onConfirm={handleConfirmPublish}
+        title="Publicar evaluación"
+        message="¿Estás seguro de que quieres publicar esta evaluación? Los alumnos podrán verla y responderla en el horario indicado (desde la fecha y hora de inicio hasta la fecha y hora de fin)."
+        confirmText="Publicar"
+        variant="info"
+        isLoading={isSaving}
+      />
+      <ConfirmActionModal
+        isOpen={showFinalizeModal}
+        onClose={() => setShowFinalizeModal(false)}
+        onConfirm={handleConfirmFinalize}
+        title="Finalizar evaluación"
+        message="¿Estás seguro de que quieres finalizar esta evaluación? Una vez finalizada, ya no se podrán enviar respuestas y los alumnos no podrán acceder al examen. Esta acción no se puede deshacer."
+        confirmText="Finalizar"
+        variant="danger"
+        isLoading={isSaving}
+      />
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Eliminar evaluación"
+        message="¿Estás seguro de que quieres eliminar esta evaluación? Se borrará permanentemente junto con todas sus preguntas y respuestas. Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        variant="danger"
+      />
     </div>
   );
 }

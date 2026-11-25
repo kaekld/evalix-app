@@ -41,16 +41,22 @@ async function getEvaluacion(id: string, docenteId: string) {
   if (error || !data) return null;
 
   // Transform data to match our types
+  // fechaISO is for <input type="date"> (YYYY-MM-DD), fechaDisplay for display (DD/MM/YYYY)
+  const fechaISO = data.fecha_inicio ? data.fecha_inicio.split("T")[0] : "";
+  const fechaDisplay = data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+  const horaDisplay = data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "";
+
   return {
     id: data.id,
     titulo: data.titulo,
-    fecha: data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }) : "",
-    hora: data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "",
+    fecha: fechaISO, // ISO format for input type="date"
+    fechaDisplay,
+    hora: horaDisplay,
     status: data.estado,
     grupoId: data.grupo_id,
     grupoNombre: data.grupo?.nombre || "",
     descripcion: data.descripcion,
-    tiempoExamen: data.tiempo_por_pregunta, // Map DB column to frontend field
+    tiempoExamen: data.tiempo_examen,
     ordenAleatorio: data.orden_aleatorio,
     preguntas: data.preguntas?.map((p: {
       id: string;

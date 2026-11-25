@@ -34,7 +34,7 @@ interface EvaluacionWithGrupo {
   fecha_inicio: string;
   fecha_fin: string;
   estado: string;
-  tiempo_por_pregunta: number;
+  tiempo_examen: number;
   orden_aleatorio: boolean;
   creado_en: string;
   actualizado_en: string;
@@ -52,7 +52,7 @@ async function verifyEvaluacionOwnership(evaluacionId: string, docenteId: string
       fecha_inicio,
       fecha_fin,
       estado,
-      tiempo_por_pregunta,
+      tiempo_examen,
       orden_aleatorio,
       creado_en,
       actualizado_en,
@@ -121,7 +121,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const formatted = {
       ...evaluacion,
-      tiempo_examen: evaluacion.tiempo_por_pregunta, // Map DB column to frontend field
+      tiempo_examen: evaluacion.tiempo_examen,
       grupoNombre: evaluacion.grupo?.[0]?.nombre || '',
       grupoCodigo: evaluacion.grupo?.[0]?.codigo || '',
       preguntas: (preguntas || []).map((p: PreguntaWithOpciones) => ({
@@ -184,7 +184,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (fecha_fin !== undefined) updates.fecha_fin = new Date(fecha_fin).toISOString();
     if (descripcion !== undefined) updates.descripcion = descripcion?.trim() || null;
     if (estado !== undefined) updates.estado = estado;
-    if (tiempo_examen !== undefined) updates.tiempo_por_pregunta = tiempo_examen; // DB column is tiempo_por_pregunta, repurposed as total exam minutes
+    if (tiempo_examen !== undefined) updates.tiempo_examen = tiempo_examen;
     if (orden_aleatorio !== undefined) updates.orden_aleatorio = orden_aleatorio;
 
     if (Object.keys(updates).length === 0) {
@@ -195,7 +195,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       .from('evaluacion')
       .update(updates)
       .eq('id', id)
-      .select('id, titulo, descripcion, fecha_inicio, fecha_fin, estado, tiempo_por_pregunta, orden_aleatorio, creado_en, actualizado_en, grupo_id')
+      .select('id, titulo, descripcion, fecha_inicio, fecha_fin, estado, tiempo_examen, orden_aleatorio, creado_en, actualizado_en, grupo_id')
       .single();
 
     if (updateError) {

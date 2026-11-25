@@ -15,7 +15,7 @@ interface ApiEvaluacion {
   fecha_inicio: string;
   fecha_fin: string;
   estado: "pendiente" | "publicada" | "finalizada";
-  tiempo_por_pregunta: number;
+  tiempo_examen: number;
   orden_aleatorio: boolean;
   creado_en: string;
   actualizado_en: string;
@@ -51,7 +51,7 @@ export default function GrupoEvaluacionesClient({ grupo, initialEvaluaciones }: 
     status: e.estado,
     grupoId: e.grupo_id,
     grupoNombre: e.grupoNombre,
-    tiempoExamen: e.tiempo_por_pregunta,
+    tiempoExamen: e.tiempo_examen,
   });
 
   const pendientesEvaluaciones = evaluaciones.filter((e) => e.estado === "pendiente").map(transformEvaluacion);

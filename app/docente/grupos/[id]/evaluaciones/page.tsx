@@ -64,7 +64,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
       fecha_inicio,
       fecha_fin,
       estado,
-      tiempo_por_pregunta,
+      tiempo_examen,
       orden_aleatorio,
       creado_en,
       actualizado_en,
@@ -106,7 +106,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
     fecha_inicio: string;
     fecha_fin: string;
     estado: string;
-    tiempo_por_pregunta: number;
+    tiempo_examen: number;
     orden_aleatorio: boolean;
     creado_en: string;
     actualizado_en: string;
@@ -121,7 +121,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
     fecha_inicio: e.fecha_inicio,
     fecha_fin: e.fecha_fin,
     estado: e.estado as "pendiente" | "publicada" | "finalizada",
-    tiempo_por_pregunta: e.tiempo_por_pregunta,
+    tiempo_examen: e.tiempo_examen,
     orden_aleatorio: e.orden_aleatorio,
     creado_en: e.creado_en,
     actualizado_en: e.actualizado_en,
@@ -152,7 +152,7 @@ interface ApiEvaluacion {
   fecha_inicio: string;
   fecha_fin: string;
   estado: "pendiente" | "publicada" | "finalizada";
-  tiempo_por_pregunta: number;
+  tiempo_examen: number;
   orden_aleatorio: boolean;
   creado_en: string;
   actualizado_en: string;

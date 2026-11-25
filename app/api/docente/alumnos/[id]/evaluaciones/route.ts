@@ -106,7 +106,7 @@ export async function GET(
         fecha_inicio,
         fecha_fin,
         estado,
-        tiempo_por_pregunta,
+        tiempo_examen,
         orden_aleatorio,
         creado_en,
         grupo_id,
@@ -128,7 +128,7 @@ export async function GET(
       fecha_inicio: string;
       fecha_fin: string;
       estado: string;
-      tiempo_por_pregunta: number;
+      tiempo_examen: number;
       orden_aleatorio: boolean;
       creado_en: string;
       grupo_id: string;
@@ -149,7 +149,7 @@ export async function GET(
       fecha_inicio: e.fecha_inicio,
       fecha_fin: e.fecha_fin,
       estado: e.estado,
-      tiempo_examen: e.tiempo_por_pregunta,
+      tiempo_examen: e.tiempo_examen,
       orden_aleatorio: e.orden_aleatorio,
       creado_en: e.creado_en,
       grupo_id: e.grupo_id,

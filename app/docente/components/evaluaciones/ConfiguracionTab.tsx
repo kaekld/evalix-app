@@ -8,7 +8,16 @@ import { Save } from "lucide-react";
 interface ConfiguracionTabProps {
   evaluacion: Evaluacion;
   grupos: Grupo[];
-  onSave: (data: Partial<Evaluacion>) => void;
+  onSave: (data: {
+    titulo?: string;
+    grupo_id?: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    estado?: "pendiente" | "publicada" | "finalizada";
+    descripcion?: string;
+    tiempo_examen?: number;
+    orden_aleatorio?: boolean;
+  }) => void;
   isLoading?: boolean;
 }
 
@@ -62,15 +71,20 @@ export default function ConfiguracionTab({
       setApiError("");
       setSaved(false);
       try {
+        // Convert frontend fields to API expected fields
+        const fechaInicio = `${fecha}T${hora}:00`;
+        const fechaFin = new Date(fechaInicio);
+        fechaFin.setHours(fechaFin.getHours() + 2);
+
         await onSave({
           titulo: titulo.trim(),
-          grupoId,
-          fecha,
-          hora,
-          status,
+          grupo_id: grupoId,
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin.toISOString(),
+          estado: status,
           descripcion: descripcion.trim() || undefined,
-          tiempoExamen,
-          ordenAleatorio,
+          tiempo_examen: tiempoExamen,
+          orden_aleatorio: ordenAleatorio,
         });
         setSaved(true);
       } catch {

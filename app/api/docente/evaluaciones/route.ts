@@ -47,7 +47,7 @@ export async function GET(req: Request) {
         fecha_inicio,
         fecha_fin,
         estado,
-        tiempo_por_pregunta,
+        tiempo_examen,
         orden_aleatorio,
         creado_en,
         actualizado_en,
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
       fecha_inicio: string;
       fecha_fin: string;
       estado: string;
-      tiempo_por_pregunta: number;
+      tiempo_examen: number;
       orden_aleatorio: boolean;
       creado_en: string;
       actualizado_en: string;
@@ -120,7 +120,7 @@ export async function GET(req: Request) {
       fecha_inicio: e.fecha_inicio,
       fecha_fin: e.fecha_fin,
       estado: e.estado,
-      tiempo_examen: e.tiempo_por_pregunta, // Map DB column to frontend field
+      tiempo_examen: e.tiempo_examen,
       orden_aleatorio: e.orden_aleatorio,
       creado_en: e.creado_en,
       actualizado_en: e.actualizado_en,
@@ -185,14 +185,14 @@ export async function POST(req: Request) {
       fecha_inicio: new Date(fecha_inicio).toISOString(),
       fecha_fin: new Date(fecha_fin).toISOString(),
       estado: 'pendiente',
-      tiempo_por_pregunta: tiempo_examen || 60, // Store total exam minutes in DB column
+      tiempo_examen: tiempo_examen || 60,
       orden_aleatorio: orden_aleatorio || false,
     };
 
     const { data: evaluacion, error: evalError } = await supabase
       .from('evaluacion')
       .insert(insertData)
-      .select('id, titulo, descripcion, fecha_inicio, fecha_fin, estado, tiempo_por_pregunta, orden_aleatorio, creado_en, actualizado_en, grupo_id')
+      .select('id, titulo, descripcion, fecha_inicio, fecha_fin, estado, tiempo_examen, orden_aleatorio, creado_en, actualizado_en, grupo_id')
       .single();
 
     if (evalError) {
@@ -201,7 +201,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ...evaluacion,
-      tiempo_examen: evaluacion.tiempo_por_pregunta, // Map DB column to frontend field
+      tiempo_examen: evaluacion.tiempo_examen,
       grupoNombre: grupo.nombre,
       grupoCodigo: grupo.codigo,
       preguntas: [],
