@@ -63,7 +63,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     const body = await req.json();
-    const { tipo, enunciado, imagen_url, tiempo_segundos, orden, opciones } = body;
+    const { tipo, enunciado, imagen_url, tiempo_segundos, orden, opciones, codigo_inicial } = body;
 
     interface OpcionInput {
       texto: string;
@@ -86,6 +86,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (imagen_url !== undefined) updates.imagen_url = imagen_url?.trim() || null;
     if (tiempo_segundos !== undefined) updates.tiempo_segundos = tiempo_segundos;
     if (orden !== undefined) updates.orden = orden;
+    if (codigo_inicial !== undefined) updates.codigo_inicial = finalTipo === 'abierta' && codigo_inicial ? codigo_inicial.trim() : null;
 
     if (Object.keys(updates).length > 0) {
       const { error: updateError } = await supabase
@@ -137,6 +138,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         imagen_url,
         tiempo_segundos,
         orden,
+        codigo_inicial,
         opcion:opcion (
           id,
           texto,

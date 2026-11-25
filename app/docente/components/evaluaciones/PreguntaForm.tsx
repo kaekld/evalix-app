@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Modal, Input, Textarea, Button, Select } from "@/components/ui";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Code } from "lucide-react";
 import { Pregunta, Opcion, OpcionInput, PreguntaInput } from "./types";
 
 interface PreguntaFormProps {
@@ -36,6 +36,8 @@ export default function PreguntaForm({
   const [enunciado, setEnunciado] = useState("");
   const [tiempoSegundos, setTiempoSegundos] = useState(60);
   const [imagenUrl, setImagenUrl] = useState("");
+  const [codigoInicial, setCodigoInicial] = useState("");
+  const [conEditor, setConEditor] = useState(false);
   const [opciones, setOpciones] = useState<Omit<OpcionInput, "id" | "pregunta_id">[]>(() => getInitialOpciones(initialData));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState("");
@@ -55,12 +57,16 @@ export default function PreguntaForm({
       setEnunciado(initialData.enunciado);
       setTiempoSegundos(initialData.tiempoSegundos);
       setImagenUrl(initialData.imagenUrl || "");
+      setCodigoInicial(initialData.codigoInicial || "");
+      setConEditor(!!initialData.codigoInicial);
       setOpciones(getInitialOpciones(initialData));
     } else {
       setTipo("cerrada");
       setEnunciado("");
       setTiempoSegundos(60);
       setImagenUrl("");
+      setCodigoInicial("");
+      setConEditor(false);
       setOpciones(getInitialOpciones(null));
     }
     setErrors({});
@@ -117,9 +123,13 @@ export default function PreguntaForm({
       if (correctCount > 1) newErrors.correcta = "Solo una respuesta correcta permitida";
     }
 
+    if (tipo === "abierta" && conEditor && codigoInicial.length > 50000) {
+      newErrors.codigoInicial = "El código inicial no puede exceder 50,000 caracteres";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [enunciado, tiempoSegundos, opciones, tipo]);
+  }, [enunciado, tiempoSegundos, opciones, tipo, conEditor, codigoInicial]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -143,12 +153,13 @@ export default function PreguntaForm({
                 es_correcta: o.es_correcta,
               }))
             : [],
+          codigo_inicial: tipo === "abierta" && conEditor ? codigoInicial.trim() : undefined,
         });
       } catch {
         setApiError("Error al guardar la pregunta. Intenta de nuevo.");
       }
     },
-    [enunciado, tiempoSegundos, imagenUrl, opciones, tipo, onSave, validate]
+    [enunciado, tiempoSegundos, imagenUrl, opciones, tipo, conEditor, codigoInicial, onSave, validate]
   );
 
   const handleClose = useCallback(() => {
@@ -217,6 +228,42 @@ export default function PreguntaForm({
             ]}
           />
         </div>
+
+        {tipo === "abierta" && (
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={conEditor}
+                onChange={(e) => setConEditor(e.target.checked)}
+                disabled={isLoading}
+                className="h-4 w-4 rounded border-[#dedee8] text-[#6543ab] focus:ring-[#6543ab]"
+              />
+              <span className="text-sm font-medium text-[#232334]">Incluir editor de código</span>
+              <Code className="h-4 w-4 text-[#747487]" />
+            </label>
+            <p className="text-xs text-[#747487] ml-6">
+              El alumno podrá editar el código durante la pregunta. Telemetría: paste, typing, copy.
+            </p>
+
+            {conEditor && (
+              <Textarea
+                label="Código inicial (opcional)"
+                id="codigoInicial"
+                rows={12}
+                placeholder="// Escribe aquí el código inicial que verá el alumno\n// Ejemplo:\nfunction suma(a, b) {\n  // TODO: implementar\n  return a + b;\n}"
+                value={codigoInicial}
+                onChange={(e) => {
+                  setCodigoInicial(e.target.value);
+                  clearError("codigoInicial");
+                }}
+                disabled={isLoading}
+                error={errors.codigoInicial}
+                className="font-mono text-sm"
+              />
+            )}
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input

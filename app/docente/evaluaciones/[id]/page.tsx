@@ -66,6 +66,7 @@ async function getEvaluacion(id: string, docenteId: string) {
       imagen_url: string | null;
       tiempo_segundos: number;
       orden: number;
+      codigo_inicial: string | null;
       opciones?: Array<{ id: string; pregunta_id: string; texto: string; es_correcta: boolean }>;
     }) => ({
       id: p.id,
@@ -75,6 +76,7 @@ async function getEvaluacion(id: string, docenteId: string) {
       imagenUrl: p.imagen_url,
       tiempoSegundos: p.tiempo_segundos,
       orden: p.orden,
+      codigoInicial: p.codigo_inicial,
       opciones: p.opciones?.map((o) => ({
         id: o.id,
         preguntaId: o.pregunta_id,

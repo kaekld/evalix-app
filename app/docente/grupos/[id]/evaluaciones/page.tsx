@@ -76,6 +76,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
         imagen_url,
         tiempo_segundos,
         orden,
+        codigo_inicial,
         opcion:opcion (
           id,
           texto,
@@ -96,6 +97,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
     imagen_url: string | null;
     tiempo_segundos: number;
     orden: number;
+    codigo_inicial: string | null;
     opcion: Array<{ id: string; texto: string; es_correcta: boolean; orden: number }> | null;
   }
 
@@ -135,6 +137,7 @@ async function getEvaluaciones(grupoId: string): Promise<ApiEvaluacion[]> {
       imagen_url: p.imagen_url,
       tiempo_segundos: p.tiempo_segundos,
       orden: p.orden,
+      codigo_inicial: p.codigo_inicial,
       opciones: p.opcion?.map((o) => ({
         id: o.id,
         texto: o.texto,
@@ -166,6 +169,7 @@ interface ApiEvaluacion {
     imagen_url: string | null;
     tiempo_segundos: number;
     orden: number;
+    codigo_inicial: string | null;
     opciones: Array<{ id: string; texto: string; es_correcta: boolean; orden: number }>;
   }>;
 }

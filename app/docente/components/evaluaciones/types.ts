@@ -27,6 +27,7 @@ export interface Pregunta {
   tiempoSegundos: number;
   orden: number;
   opciones?: Opcion[];
+  codigoInicial?: string; // Código inicial para editor (opcional)
 }
 
 export interface Opcion {
@@ -51,6 +52,7 @@ export interface PreguntaInput {
   tiempo_segundos: number;
   orden: number;
   opciones: OpcionInput[];
+  codigo_inicial?: string; // Código inicial para editor (opcional)
 }
 
 export const statuses = [

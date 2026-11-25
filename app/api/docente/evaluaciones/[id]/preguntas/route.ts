@@ -52,7 +52,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { tipo, enunciado, imagen_url, tiempo_segundos, orden, opciones } = body;
+    const { tipo, enunciado, imagen_url, tiempo_segundos, orden, opciones, codigo_inicial } = body;
 
     if (!tipo || !enunciado) {
       return NextResponse.json({ message: 'Tipo y enunciado son obligatorios' }, { status: 400 });
@@ -96,8 +96,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         imagen_url: imagen_url?.trim() || null,
         tiempo_segundos: tiempo_segundos || 60,
         orden: finalOrden,
+        codigo_inicial: tipo === 'abierta' && codigo_inicial ? codigo_inicial.trim() : null,
       })
-      .select('id, tipo, enunciado, imagen_url, tiempo_segundos, orden')
+      .select('id, tipo, enunciado, imagen_url, tiempo_segundos, orden, codigo_inicial')
       .single();
 
     if (pregError) {
@@ -131,6 +132,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({
       ...pregunta,
+      codigo_inicial: pregunta.codigo_inicial,
       opciones: opcionesInsertadas,
     }, { status: 201 });
   } catch (err: unknown) {
