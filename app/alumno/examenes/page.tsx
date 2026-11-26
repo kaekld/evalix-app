@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { BaseHeader } from "@/components/ui";
-import SubjectSelector from "../components/exams/SubjectSelector";
+import GroupSelector from "../components/exams/GroupSelector";
 import SubjectHeader from "../components/exams/SubjectHeader";
 import ExamSection from "../components/exams/ExamSection";
 import {
-  subjectsData,
-  examsData,
-  years,
+  type Exam,
   getStatusStyles,
   getSortedExams,
 } from "../components/exams/types";
+import { useAlumnoGrupos, type AlumnoGrupo } from "@/lib/hooks/useAlumnoGrupos";
 
 interface User {
   id: string;
@@ -23,17 +22,61 @@ interface User {
   rol: string;
 }
 
+interface GroupWithExams extends AlumnoGrupo {
+  examSummaries: ExamSummary[];
+}
+
+interface ExamSummary {
+  id: string;
+  titulo: string;
+  fecha_inicio: string;
+  estado: 'programada' | 'publicada' | 'en_curso' | 'finalizada' | 'cancelada';
+}
+
+interface EvaluacionWithIntento {
+  id: string;
+  unit: string;
+  date: string;
+  time?: string;
+  status: "pending" | "cancelled" | "completed";
+  evaluacion: {
+    id: string;
+    titulo: string;
+    descripcion: string | null;
+    fecha_inicio: string;
+    fecha_fin: string;
+    estado: string;
+    tiempo_examen: number;
+    orden_aleatorio: boolean;
+  };
+  intento: {
+    id: string;
+    estado: string;
+    iniciado_en: string;
+    completado_en: string | null;
+  } | null;
+}
+
 const navigationLinks = [
-  { href: "/alumno/inicio", label: "Inicio", active: true },
-  { href: "/alumno/examenes", label: "Exámenes" },
+  { href: "/alumno/inicio", label: "Inicio" },
+  { href: "/alumno/examenes", label: "Exámenes", active: true },
 ];
 
+const years = [2026, 2025, 2024, 2023];
+
 export default function AlumnoExamenesPage() {
+  const { grupos, fetchGrupos } = useAlumnoGrupos();
   const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(1);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [evaluaciones, setEvaluaciones] = useState<EvaluacionWithIntento[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const router = useRouter();
+  const initialFetchDone = useRef(false);
+
+  useEffect(() => {
+    fetchGrupos();
+  }, [fetchGrupos]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -51,7 +94,6 @@ export default function AlumnoExamenesPage() {
           });
         }
       } catch {
-        // Usuario no autenticado, el middleware redirigirá
       } finally {
         setUserLoading(false);
       }
@@ -59,13 +101,43 @@ export default function AlumnoExamenesPage() {
     fetchUser();
   }, []);
 
-  const filteredExams = examsData.filter(
-    (exam) => exam.subjectId === selectedSubjectId
-  );
+  const fetchEvaluaciones = useCallback(async (grupoId: string) => {
+    try {
+      const res = await fetch(`/api/alumno/grupos/${grupoId}/evaluaciones`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Error al cargar exámenes");
+      }
+      const data = await res.json();
+      setEvaluaciones(data);
+      setSelectedGroupId(grupoId);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      console.error(message);
+    }
+  }, []);
 
-  const pendingExams = filteredExams.filter((e) => e.status === "pending");
-  const cancelledExams = filteredExams.filter((e) => e.status === "cancelled");
-  const completedExams = filteredExams.filter((e) => e.status === "completed");
+  useEffect(() => {
+    if (grupos.length > 0 && !selectedGroupId && !initialFetchDone.current) {
+      initialFetchDone.current = true;
+      fetchEvaluaciones(grupos[0].id);
+    }
+  }, [grupos, selectedGroupId, fetchEvaluaciones]);
+
+  const toExam = (e: EvaluacionWithIntento): Exam => ({
+    id: Number(e.id) || 0,
+    unit: e.unit,
+    date: e.date,
+    time: e.time,
+    status: e.status,
+    subjectId: selectedGroupId ? Number(selectedGroupId) : 1,
+  });
+
+  const pendingExams = evaluaciones.filter((e) => e.status === "pending").map(toExam);
+  const cancelledExams = evaluaciones.filter((e) => e.status === "cancelled").map(toExam);
+  const completedExams = evaluaciones.filter((e) => e.status === "completed").map(toExam);
+
+  const selectedGroup = grupos.find((g) => g.id === selectedGroupId);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -74,8 +146,30 @@ export default function AlumnoExamenesPage() {
   };
 
   const handleProfile = () => {};
-
   const handleChangePassword = () => {};
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+        <BaseHeader
+          user={null}
+          role="ALUMNO"
+          navigationLinks={navigationLinks}
+          onProfile={handleProfile}
+          onChangePassword={handleChangePassword}
+          onLogout={handleLogout}
+          brandColor="purple"
+          isLoading={true}
+        />
+        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 flex items-center justify-center">
+          <div className="animate-pulse space-y-4 w-full max-w-3xl">
+            <div className="h-8 bg-[var(--color-border)] rounded w-3/4" />
+            <div className="h-4 bg-[var(--color-border)] rounded w-1/2" />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
@@ -101,11 +195,11 @@ export default function AlumnoExamenesPage() {
 
         {/* Content Grid: Left panel (280px) + Right panel (flex-1) */}
         <div className="flex gap-6">
-          {/* Left Panel: Periodo & Materias */}
-          <SubjectSelector
-            subjects={subjectsData}
-            selectedSubjectId={selectedSubjectId}
-            onSelectSubject={setSelectedSubjectId}
+          {/* Left Panel: Periodo & Grupos */}
+          <GroupSelector
+            groups={grupos as GroupWithExams[]}
+            selectedGroupId={selectedGroupId}
+            onSelectGroup={fetchEvaluaciones}
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
             years={years}
@@ -113,9 +207,13 @@ export default function AlumnoExamenesPage() {
 
           {/* Right Panel: Exámenes */}
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Subject Header */}
+            {/* Group Header */}
             <SubjectHeader
-              subject={subjectsData.find((s) => s.id === selectedSubjectId)}
+              subject={selectedGroup ? {
+                id: Number(selectedGroup.id) || 1,
+                name: selectedGroup.nombre,
+                code: selectedGroup.codigo,
+              } : undefined}
               completedCount={completedExams.length}
               pendingCount={pendingExams.length}
               cancelledCount={cancelledExams.length}

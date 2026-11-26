@@ -8,6 +8,7 @@ import CambiarPasswordModal from "../components/modals/CambiarPasswordModal";
 import { GroupCard, type AlumnoGroup, type Exam } from "@/components/ui";
 import UpcomingExamCard from "../components/exams/UpcomingExamCard";
 import ExamsSidebar from "../components/exams/ExamsSidebar";
+import { useAlumnoGrupos, type AlumnoGrupo } from "@/lib/hooks/useAlumnoGrupos";
 
 interface User {
   id: string;
@@ -18,41 +19,61 @@ interface User {
   rol: string;
 }
 
-const groupsData: AlumnoGroup[] = [
-  {
-    id: 1,
-    nombre: "Programación Orientada a Objetos",
-    codigo: "Grupo A · 24 estudiantes",
-    categoria: "Programación",
-    estudiantes_count: 24,
-    exams: [
-      { id: "1", unit: "Unidad 1", date: "12 NOV 2026", status: "completed" },
-    ],
+function mapGrupoToAlumnoGroup(grupo: AlumnoGrupo): AlumnoGroup {
+  return {
+    id: grupo.id,
+    nombre: grupo.nombre,
+    codigo: grupo.codigo,
+    categoria: grupo.categoria,
+    estudiantes_count: 0,
+    exams: grupo.examenes.map((e) => ({
+      id: e.id,
+      unit: e.titulo,
+      date: new Date(e.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).toUpperCase(),
+      time: new Date(e.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      status: mapEstadoToStatus(e.estado),
+    })),
     expanded: false,
-  },
-  {
-    id: 2,
-    nombre: "Sistemas Programables",
-    codigo: "Grupo B · 18 estudiantes",
-    categoria: "Sistemas",
-    estudiantes_count: 18,
-    exams: [
-      { id: "2", unit: "Unidad 2", date: "20 NOV · 11:00 h", status: "upcoming" },
-      { id: "3", unit: "Unidad 1", date: "15 NOV 2026", status: "completed" },
-    ],
-    expanded: false,
-  },
-];
+  };
+}
+
+function mapEstadoToStatus(estado: AlumnoExamen['estado']): Exam['status'] {
+  switch (estado) {
+    case 'programada':
+    case 'publicada':
+      return 'upcoming';
+    case 'en_curso':
+      return 'upcoming';
+    case 'finalizada':
+      return 'completed';
+    case 'cancelada':
+      return 'cancelled';
+    default:
+      return 'upcoming';
+  }
+}
+
+type AlumnoExamen = {
+  id: string;
+  titulo: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: 'programada' | 'publicada' | 'en_curso' | 'finalizada' | 'cancelada';
+  tiempo_examen: number;
+};
 
 export default function AlumnoInicioPage() {
-  const [groups, setGroups] = useState<AlumnoGroup[]>(groupsData);
+  const { grupos, loading: gruposLoading, error: gruposError, fetchGrupos } = useAlumnoGrupos();
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const router = useRouter();
 
-  // Obtener usuario desde el servidor (cookie HttpOnly)
+  useEffect(() => {
+    fetchGrupos();
+  }, [fetchGrupos]);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -69,7 +90,6 @@ export default function AlumnoInicioPage() {
           });
         }
       } catch {
-        // Usuario no autenticado, el middleware redirigirá
       } finally {
         setUserLoading(false);
       }
@@ -105,7 +125,7 @@ export default function AlumnoInicioPage() {
     setShowPasswordModal(true);
   };
 
-  // Get next upcoming exam across all groups
+  const groups = grupos.map(mapGrupoToAlumnoGroup);
   const allExams = groups.flatMap(g => g.exams);
   const nextUpcomingExam = allExams
     .filter(e => e.status === "upcoming")
@@ -115,6 +135,63 @@ export default function AlumnoInicioPage() {
     { href: "/alumno/inicio", label: "Inicio", active: true },
     { href: "/alumno/examenes", label: "Exámenes" },
   ];
+
+  if (gruposLoading || userLoading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+        <BaseHeader
+          user={null}
+          role="ALUMNO"
+          navigationLinks={navigationLinks}
+          onProfile={handleProfile}
+          onChangePassword={handleChangePassword}
+          onLogout={handleLogout}
+          brandColor="purple"
+          isLoading={true}
+        />
+        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 flex items-center justify-center">
+          <div className="animate-pulse space-y-4 w-full max-w-3xl">
+            <div className="h-8 bg-[var(--color-border)] rounded w-3/4" />
+            <div className="h-4 bg-[var(--color-border)] rounded w-1/2" />
+            <div className="h-4 bg-[var(--color-border)] rounded w-1/3" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[1, 2].map(i => (
+                <div key={i} className="h-40 bg-[var(--color-border)] rounded" />
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (gruposError) {
+    return (
+      <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
+        <BaseHeader
+          user={user}
+          role="ALUMNO"
+          navigationLinks={navigationLinks}
+          onProfile={handleProfile}
+          onChangePassword={handleChangePassword}
+          onLogout={handleLogout}
+          brandColor="purple"
+          isLoading={false}
+        />
+        <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 flex items-center justify-center">
+          <div className="text-center text-[var(--color-danger)]">
+            <p>Error al cargar grupos: {gruposError}</p>
+            <button
+              onClick={() => fetchGrupos()}
+              className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90"
+            >
+              Reintentar
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-background)] flex flex-col font-sans">
@@ -161,14 +238,22 @@ export default function AlumnoInicioPage() {
                 Grupos
               </h2>
               <div className="space-y-4 max-w-3xl">
-                {groups.map((group) => (
-                  <GroupCard
-                    key={group.id}
-                    group={group}
-                    variant="alumno"
-                    getSortedExams={getSortedExams}
-                  />
-                ))}
+                {groups.length === 0 ? (
+                  <div className="bg-white border border-[var(--color-border)] rounded-xl p-8 text-center">
+                    <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)]">
+                      No estás inscrito en ningún grupo aún.
+                    </p>
+                  </div>
+                ) : (
+                  groups.map((group) => (
+                    <GroupCard
+                      key={group.id}
+                      group={group}
+                      variant="alumno"
+                      getSortedExams={getSortedExams}
+                    />
+                  ))
+                )}
               </div>
             </section>
           </div>
