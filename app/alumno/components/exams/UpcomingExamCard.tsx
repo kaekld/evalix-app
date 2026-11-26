@@ -13,7 +13,7 @@ export default function UpcomingExamCard({ subject, unit, questionCount, onEnter
   return (
     <section>
       <h2 className="font-semibold text-sm leading-relaxed text-[var(--color-text-primary)] mb-4">
-        Examen por Empezar
+        Evaluación por Empezar
       </h2>
       <div className="bg-[var(--color-exam-card-bg)] rounded-xl p-6 max-w-3xl min-h-[9.5rem]">
         <p className="font-semibold text-2xl leading-relaxed text-[var(--color-text-primary)] mb-2">
@@ -23,7 +23,7 @@ export default function UpcomingExamCard({ subject, unit, questionCount, onEnter
           {unit} · {questionCount} preguntas
         </p>
         <Button onClick={onEnter} className="w-[9.4375rem]">
-          Entrar a examen
+          Entrar a evaluación
         </Button>
       </div>
     </section>

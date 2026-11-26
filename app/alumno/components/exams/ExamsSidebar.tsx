@@ -15,7 +15,7 @@ export default function ExamsSidebar({ exams }: ExamsSidebarProps) {
       <div className="bg-white border border-[var(--color-border)] rounded-xl h-[26.5rem] overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--color-border)]">
           <h2 className="font-semibold text-sm leading-relaxed text-[var(--color-text-primary)]">
-            Exámenes próximos
+            Evaluaciones próximas
           </h2>
         </div>
         <div className="p-4">
@@ -30,7 +30,7 @@ export default function ExamsSidebar({ exams }: ExamsSidebarProps) {
             </div>
           ) : (
             <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)] text-center py-8">
-              No hay exámenes próximos
+              No hay evaluaciones próximas
             </p>
           )}
         </div>

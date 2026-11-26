@@ -8,6 +8,7 @@ import CambiarPasswordModal from "../components/modals/CambiarPasswordModal";
 import { GroupCard, type AlumnoGroup, type Exam } from "@/components/ui";
 import UpcomingExamCard from "../components/exams/UpcomingExamCard";
 import ExamsSidebar from "../components/exams/ExamsSidebar";
+import ExamConfirmModal from "../components/exams/ExamConfirmModal";
 import { useAlumnoGrupos, type AlumnoGrupo } from "@/lib/hooks/useAlumnoGrupos";
 
 interface User {
@@ -68,6 +69,14 @@ export default function AlumnoInicioPage() {
   const [userLoading, setUserLoading] = useState(true);
   const [showPerfilModal, setShowPerfilModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedExam, setSelectedExam] = useState<{
+    id: string;
+    titulo: string;
+    fecha_inicio: string;
+    fecha_fin: string;
+    tiempo_examen: number;
+  } | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,6 +134,47 @@ export default function AlumnoInicioPage() {
     setShowPasswordModal(true);
   };
 
+  const handleExamClick = (exam: Exam) => {
+    const grupo = groups.find(g => g.exams.some(e => e.id === exam.id));
+    const examenOriginal = grupo?.exams.find(e => e.id === exam.id);
+    if (examenOriginal) {
+      // Buscar la evaluación original en los datos de la API para obtener fecha_fin y tiempo_examen
+      const grupoOriginal = grupos.find(g => g.id === grupo?.id);
+      const evalOriginal = grupoOriginal?.examenes.find(e => e.id === exam.id);
+      if (evalOriginal) {
+        setSelectedExam({
+          id: evalOriginal.id,
+          titulo: evalOriginal.titulo,
+          fecha_inicio: evalOriginal.fecha_inicio,
+          fecha_fin: evalOriginal.fecha_fin,
+          tiempo_examen: evalOriginal.tiempo_examen,
+        });
+        setShowConfirmModal(true);
+      }
+    }
+  };
+
+  const handleConfirmExam = async () => {
+    if (!selectedExam) return;
+    try {
+      const res = await fetch(`/api/alumno/examenes/${selectedExam.id}/iniciar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message || "Error al iniciar evaluación");
+        return;
+      }
+      setShowConfirmModal(false);
+      setSelectedExam(null);
+      router.push(`/alumno/examenes/${selectedExam.id}/rendir`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      alert(message);
+    }
+  };
+
   const groups = grupos.map(mapGrupoToAlumnoGroup);
   const allExams = groups.flatMap(g => g.exams);
   const nextUpcomingExam = allExams
@@ -133,7 +183,7 @@ export default function AlumnoInicioPage() {
 
   const navigationLinks = [
     { href: "/alumno/inicio", label: "Inicio", active: true },
-    { href: "/alumno/examenes", label: "Exámenes" },
+    { href: "/alumno/evaluaciones", label: "Evaluaciones" },
   ];
 
   if (gruposLoading || userLoading) {
@@ -222,13 +272,13 @@ export default function AlumnoInicioPage() {
 
           {/* Main Area */}
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Examen por Empezar */}
+            {/* Evaluación por Empezar */}
             {nextUpcomingExam && (
               <UpcomingExamCard
                 subject={groups.find(g => g.exams.some(e => e.id === nextUpcomingExam.id))?.nombre || "Materia"}
                 unit={nextUpcomingExam.unit}
                 questionCount={25}
-                onEnter={() => {}}
+                onEnter={() => handleExamClick(nextUpcomingExam)}
               />
             )}
 
@@ -251,6 +301,7 @@ export default function AlumnoInicioPage() {
                       group={group}
                       variant="alumno"
                       getSortedExams={getSortedExams}
+                      onExamClick={handleExamClick}
                     />
                   ))
                 )}
@@ -269,6 +320,15 @@ export default function AlumnoInicioPage() {
       <CambiarPasswordModal
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
+      />
+      <ExamConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setSelectedExam(null);
+        }}
+        exam={selectedExam!}
+        onConfirm={handleConfirmExam}
       />
     </div>
   );

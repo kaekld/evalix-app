@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { MoreVertical, Edit, Trash2, Users, FileText } from "lucide-react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSeparator } from "./Dropdown";
@@ -46,11 +47,12 @@ export interface GroupCardProps {
   onViewEvaluaciones?: (groupId: string | number) => void;
   onViewConfiguracion?: (groupId: string | number) => void;
   getSortedExams?: (exams: Exam[]) => Exam[];
+  onExamClick?: (exam: Exam) => void;
 }
 
 const statusStyles: Record<Exam["status"], { bg: string; badge: string; label: string; datePrefix: string }> = {
   upcoming: { bg: "bg-[var(--color-primary-light)]", badge: "bg-white text-[var(--color-primary)]", label: "Próximo", datePrefix: "" },
-  completed: { bg: "bg-[var(--color-success-bg)]", badge: "bg-[var(--color-success-bg)] text-[var(--color-success)]", label: "Realizado", datePrefix: "Examen realizado · " },
+  completed: { bg: "bg-[var(--color-success-bg)]", badge: "bg-[var(--color-success-bg)] text-[var(--color-success)]", label: "Realizado", datePrefix: "Evaluación realizada · " },
   pending: { bg: "bg-[var(--color-primary-light)]", badge: "bg-white text-[var(--color-primary)] border border-[var(--color-primary)]", label: "Pendiente", datePrefix: "" },
   cancelled: { bg: "bg-[var(--color-danger-bg)]", badge: "bg-[var(--color-danger-bg)] text-[var(--color-danger)]", label: "Cancelado", datePrefix: "" },
 };
@@ -65,6 +67,7 @@ export function GroupCard({
   onViewEvaluaciones,
   onViewConfiguracion,
   getSortedExams,
+  onExamClick,
 }: GroupCardProps) {
   const isAlumno = variant === "alumno";
   const isDocente = variant === "docente";
@@ -95,6 +98,14 @@ export function GroupCard({
     onViewConfiguracion?.(group.id);
   };
 
+  const [expanded, setExpanded] = useState(false);
+
+  const handleHeaderClick = () => {
+    if (isAlumno) {
+      setExpanded(!expanded);
+    }
+  };
+
   const sortedExams = isAlumno && getSortedExams ? getSortedExams(alumnoGroup.exams) : [];
 
   return (
@@ -102,7 +113,13 @@ export function GroupCard({
       {/* Group Header */}
       <div className="relative h-14 bg-[var(--color-background)] border-b border-[var(--color-border)] px-4 flex items-center justify-between">
         <div className="absolute left-0 top-0 w-1 h-full bg-[var(--color-group-accent)]" />
-        <div className="pl-4 flex-1 min-w-0 text-left">
+        <div 
+          className="pl-4 flex-1 min-w-0 text-left cursor-pointer hover:bg-[var(--color-background)] transition-colors"
+          onClick={handleHeaderClick}
+          role={isAlumno ? "button" : undefined}
+          tabIndex={isAlumno ? 0 : undefined}
+          onKeyDown={isAlumno ? (e) => { if (e.key === "Enter" || e.key === " ") handleHeaderClick(); } : undefined}
+        >
           <p className="font-semibold text-base leading-relaxed text-[var(--color-text-primary)] truncate">
             {group.nombre}
           </p>
@@ -198,7 +215,7 @@ export function GroupCard({
       </div>
 
       {/* Expanded Content */}
-      {group.expanded && (
+      {expanded && (
         <div className="border-t border-[var(--color-border)] bg-[var(--color-background)] p-4 animate-fade-in">
           {isDocente ? (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -257,14 +274,22 @@ export function GroupCard({
           ) : (
             sortedExams.length === 0 ? (
               <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)] pt-4">
-                No hay ningún examen registrado.
+                No hay ninguna evaluación registrada.
               </p>
             ) : (
               <div className="space-y-3 pt-4">
                 {sortedExams.map((exam) => {
                   const styles = statusStyles[exam.status];
+                  const isClickable = onExamClick && (exam.status === "upcoming" || exam.status === "pending");
                   return (
-                    <div key={exam.id} className={`rounded-lg p-4 ${styles.bg} border border-[var(--color-border)]`}>
+                    <div
+                      key={exam.id}
+                      className={`rounded-lg p-4 ${styles.bg} border border-[var(--color-border)] ${isClickable ? "cursor-pointer hover:bg-opacity-90 transition-opacity" : ""}`}
+                      onClick={isClickable ? () => onExamClick?.(exam) : undefined}
+                      role={isClickable ? "button" : undefined}
+                      tabIndex={isClickable ? 0 : undefined}
+                      onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onExamClick?.(exam); } : undefined}
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-base leading-normal text-[var(--color-text-primary)]">

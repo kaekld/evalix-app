@@ -39,7 +39,7 @@ export const getStatusStyles = (status: Exam["status"]) => {
         badgeBg: "bg-[#e5f2e8]",
         badgeText: "text-[#336647]",
         badgeLabel: "Realizado",
-        datePrefix: "Examen realizado · ",
+        datePrefix: "Evaluación realizada · ",
       };
   }
 };
