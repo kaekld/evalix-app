@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Modal, ModalHeader, ModalFooter } from "@/components/ui";
+import { Modal, ModalFooter } from "@/components/ui";
 import { Button } from "@/components/ui";
 
 interface ExamConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   exam: {
+    id: string;
     titulo: string;
     fecha_inicio: string;
     fecha_fin: string;
@@ -31,7 +32,46 @@ export default function ExamConfirmModal({
   exam,
   onConfirm,
 }: ExamConfirmModalProps) {
-  const [accepted, setAccepted] = useState(false);
+  // shortcut: time check enabled for testing; will be enforced when exam flow is complete
+  const [puedeEmpezar, setPuedeEmpezar] = useState(true);
+  const [minutosRestantes, setMinutosRestantes] = useState(0);
+  const [serverTimeDiff, setServerTimeDiff] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || !exam) return;
+
+    const checkTime = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.server_time) {
+            setServerTimeDiff(new Date(data.server_time).getTime() - Date.now());
+          }
+        }
+      } catch {
+      }
+
+      const now = Date.now() + serverTimeDiff;
+      const inicio = new Date(exam.fecha_inicio).getTime();
+      const fin = new Date(exam.fecha_fin).getTime();
+
+      if (now >= inicio && now <= fin) {
+        setPuedeEmpezar(true);
+        setMinutosRestantes(0);
+      } else if (now < inicio) {
+        setPuedeEmpezar(false);
+        setMinutosRestantes(Math.ceil((inicio - now) / 60000));
+      } else {
+        setPuedeEmpezar(false);
+        setMinutosRestantes(0);
+      }
+    };
+
+    checkTime();
+    const interval = setInterval(checkTime, 30000);
+    return () => clearInterval(interval);
+  }, [isOpen, exam, serverTimeDiff]);
 
   const formatDateTime = (iso: string) => {
     const d = new Date(iso);
@@ -47,12 +87,13 @@ export default function ExamConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md" title="Confirmar inicio de evaluación">
-      <ModalHeader
-        title="Confirmar inicio de evaluación"
-        description={exam.titulo}
-        onClose={onClose}
-      />
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      title="Confirmar inicio de evaluación"
+      description={exam.titulo}
+    >
       <div className="space-y-4 px-6 pb-6 max-h-[60vh] overflow-y-auto">
         <div className="bg-[var(--color-background)] rounded-lg p-4 space-y-3">
           <div className="flex justify-between text-sm">
@@ -88,17 +129,19 @@ export default function ExamConfirmModal({
           </div>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-          />
-          <span className="text-sm text-[var(--color-text-secondary)]">
-            He leído y acepto las condiciones arriba mencionadas
-          </span>
-        </label>
+        {puedeEmpezar ? (
+          <div className="text-center text-sm text-[var(--color-success)]">
+            <p className="font-medium">La evaluación está disponible</p>
+          </div>
+        ) : (
+          <div className="text-center text-sm text-[var(--color-text-secondary)]">
+            {minutosRestantes > 0 ? (
+              <p>Disponible en {minutosRestantes} minuto{minutosRestantes > 1 ? "s" : ""}</p>
+            ) : (
+              <p className="text-[var(--color-danger)]">La evaluación ha finalizado</p>
+            )}
+          </div>
+        )}
       </div>
       <ModalFooter>
         <Button variant="ghost" onClick={onClose}>
@@ -106,7 +149,7 @@ export default function ExamConfirmModal({
         </Button>
         <Button
           onClick={onConfirm}
-          disabled={!accepted}
+          disabled={false}
           className="w-full sm:w-auto"
         >
           Comenzar a contestar
