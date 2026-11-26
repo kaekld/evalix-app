@@ -33,6 +33,9 @@ function mapGrupoToAlumnoGroup(grupo: AlumnoGrupo): AlumnoGroup {
       date: new Date(e.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).toUpperCase(),
       time: new Date(e.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       status: mapEstadoToStatus(e.estado),
+      fecha_inicio_iso: e.fecha_inicio,
+      fecha_fin: e.fecha_fin,
+      tiempo_examen: e.tiempo_examen,
     })),
     expanded: false,
   };
@@ -179,7 +182,7 @@ export default function AlumnoInicioPage() {
   const allExams = groups.flatMap(g => g.exams);
   const nextUpcomingExam = allExams
     .filter(e => e.status === "upcoming")
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    .sort((a, b) => new Date(a.fecha_inicio_iso || a.date).getTime() - new Date(b.fecha_inicio_iso || b.date).getTime())[0];
 
   const navigationLinks = [
     { href: "/alumno/inicio", label: "Inicio", active: true },
@@ -277,8 +280,20 @@ export default function AlumnoInicioPage() {
               <UpcomingExamCard
                 subject={groups.find(g => g.exams.some(e => e.id === nextUpcomingExam.id))?.nombre || "Materia"}
                 unit={nextUpcomingExam.unit}
+                fecha_inicio={nextUpcomingExam.fecha_inicio_iso || ""}
+                fecha_fin={nextUpcomingExam.fecha_fin || ""}
+                tiempo_examen={nextUpcomingExam.tiempo_examen || 0}
                 questionCount={25}
                 onEnter={() => handleExamClick(nextUpcomingExam)}
+                onViewDetails={() => {
+                  const group = groups.find(g => g.exams.some(e => e.id === nextUpcomingExam.id));
+                  if (group) {
+                    // Find the GroupCard and expand it, or navigate to evaluaciones
+                    // For now, we'll just scroll to the group
+                    const element = document.getElementById(`group-content-${group.id}`);
+                    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }
+                }}
               />
             )}
 

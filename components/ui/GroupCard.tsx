@@ -13,6 +13,9 @@ export interface Exam {
   date: string;
   time?: string;
   status: "upcoming" | "completed" | "pending" | "cancelled";
+  fecha_inicio_iso?: string;
+  fecha_fin?: string;
+  tiempo_examen?: number;
 }
 
 export interface GroupBase {
