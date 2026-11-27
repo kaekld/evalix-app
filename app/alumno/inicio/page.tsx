@@ -315,15 +315,15 @@ export default function AlumnoInicioPage() {
               <h2 className="font-semibold text-lg leading-relaxed text-[var(--color-text-primary)] mb-4">
                 Grupos
               </h2>
-              <div className="space-y-4 max-w-3xl">
-                {groups.length === 0 ? (
-                  <div className="bg-white border border-[var(--color-border)] rounded-xl p-8 text-center">
-                    <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)]">
-                      No estás inscrito en ningún grupo aún.
-                    </p>
-                  </div>
-                ) : (
-                  groups.map((group) => (
+              {groups.length === 0 ? (
+                <div className="bg-white border border-[var(--color-border)] rounded-xl p-8 text-center">
+                  <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)]">
+                    No estás inscrito en ningún grupo aún.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {groups.map((group) => (
                     <GroupCard
                       key={group.id}
                       group={group}
@@ -332,9 +332,9 @@ export default function AlumnoInicioPage() {
                       onExamClick={handleExamClick}
                       onViewDetails={handleViewGroupDetail}
                     />
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </div>

@@ -72,74 +72,74 @@ export default function UpcomingExamCard({
     <section>
       <div className="bg-white border border-[var(--color-border)] border-l-4 border-[var(--color-primary)] rounded-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-[var(--color-background)] border-b border-[var(--color-border)]">
-          <h2 className="font-semibold text-sm leading-relaxed text-[var(--color-text-primary)]">
+        <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+          <h2 className="font-semibold text-sm text-[var(--color-text-primary)]">
             Evaluación por Empezar
           </h2>
           <div className="flex items-center gap-2">
             {questionCount && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-primary-light)] text-[var(--color-primary)]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-primary-light)] text-[var(--color-primary)]">
                 {questionCount} preguntas
               </span>
             )}
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}>
-              <StatusIcon className="h-3.5 w-3.5" />
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${status.className}`}>
+              <StatusIcon className="h-3 w-3" />
               {status.label}
             </span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5">
+        <div className="p-4 space-y-4">
           {/* Subject & Title */}
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <p className="font-medium text-sm text-[var(--color-primary)] flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
               {subject}
             </p>
-            <h3 className="font-semibold text-xl leading-relaxed text-[var(--color-text-primary)]">
+            <h3 className="font-semibold text-lg text-[var(--color-text-primary)]">
               {unit}
             </h3>
           </div>
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
-            <div className="bg-[var(--color-background)] rounded-lg p-4 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-sm text-[var(--color-text-secondary)] mb-1">
-                <Calendar className="h-4 w-4" />
+          {/* Info Grid - Compact */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-[var(--color-background)] rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-[var(--color-text-secondary)] mb-0.5">
+                <Calendar className="h-3.5 w-3.5" />
                 <span>Inicio</span>
               </div>
-              <p className="font-semibold text-base text-[var(--color-text-primary)]">
+              <p className="font-semibold text-sm text-[var(--color-text-primary)]">
                 {formatDateTime(fecha_inicio)}
               </p>
             </div>
 
-            <div className="bg-[var(--color-background)] rounded-lg p-4 text-center border-l border-[var(--color-border)] border-r border-[var(--color-border)]">
-              <div className="flex items-center justify-center gap-1.5 text-sm text-[var(--color-text-secondary)] mb-1">
-                <Clock className="h-4 w-4" />
+            <div className="bg-[var(--color-background)] rounded-lg p-3 text-center border-x border-[var(--color-border)]">
+              <div className="flex items-center justify-center gap-1 text-xs text-[var(--color-text-secondary)] mb-0.5">
+                <Clock className="h-3.5 w-3.5" />
                 <span>Duración</span>
               </div>
-              <p className="font-semibold text-base text-[var(--color-text-primary)]">
+              <p className="font-semibold text-sm text-[var(--color-text-primary)]">
                 {tiempo_examen} min
               </p>
             </div>
 
-            <div className="bg-[var(--color-background)] rounded-lg p-4 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-sm text-[var(--color-text-secondary)] mb-1">
-                <ClockIcon className="h-4 w-4" />
+            <div className="bg-[var(--color-background)] rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-[var(--color-text-secondary)] mb-0.5">
+                <ClockIcon className="h-3.5 w-3.5" />
                 <span>Fin</span>
               </div>
-              <p className="font-semibold text-base text-[var(--color-text-primary)]">
+              <p className="font-semibold text-sm text-[var(--color-text-primary)]">
                 {formatTime(fecha_fin)}
               </p>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
             <Button
               onClick={onEnter}
-              className="flex-1 bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity py-3 font-medium"
+              className="flex-1 bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity py-2.5 font-medium"
               size="lg"
             >
               Entrar a evaluación
@@ -148,7 +148,7 @@ export default function UpcomingExamCard({
               <Button
                 onClick={onViewDetails}
                 variant="ghost"
-                className="flex-1 sm:w-auto text-[var(--color-text-primary)] hover:bg-[var(--color-background)] py-3 font-medium"
+                className="flex-1 sm:w-auto text-[var(--color-text-primary)] hover:bg-[var(--color-background)] py-2.5 font-medium"
                 size="lg"
               >
                 Ver detalles
