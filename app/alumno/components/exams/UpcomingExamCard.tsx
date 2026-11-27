@@ -76,10 +76,17 @@ export default function UpcomingExamCard({
           <h2 className="font-semibold text-sm leading-relaxed text-[var(--color-text-primary)]">
             Evaluación por Empezar
           </h2>
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}>
-            <StatusIcon className="h-3.5 w-3.5" />
-            {status.label}
-          </span>
+          <div className="flex items-center gap-2">
+            {questionCount && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-primary-light)] text-[var(--color-primary)]">
+                {questionCount} preguntas
+              </span>
+            )}
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}>
+              <StatusIcon className="h-3.5 w-3.5" />
+              {status.label}
+            </span>
+          </div>
         </div>
 
         {/* Content */}
@@ -127,13 +134,6 @@ export default function UpcomingExamCard({
               </p>
             </div>
           </div>
-
-          {/* Optional: Question count */}
-          {questionCount && (
-            <p className="text-sm text-[var(--color-text-secondary)] text-center pt-2 border-t border-[var(--color-border)]">
-              {questionCount} preguntas
-            </p>
-          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
