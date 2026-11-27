@@ -44,13 +44,14 @@ export interface GroupCardProps {
   group: DocenteGroup | AlumnoGroup;
   variant: GroupVariant;
   onEdit?: (group: DocenteGroup) => void;
-  onDelete?: (groupId: string | number) => void;
-  onViewGroup?: (groupId: string | number) => void;
-  onViewStudents?: (groupId: string | number) => void;
-  onViewEvaluaciones?: (groupId: string | number) => void;
-  onViewConfiguracion?: (groupId: string | number) => void;
+  onDelete?: (groupId: string) => void;
+  onViewGroup?: (groupId: string) => void;
+  onViewStudents?: (groupId: string) => void;
+  onViewEvaluaciones?: (groupId: string) => void;
+  onViewConfiguracion?: (groupId: string) => void;
   getSortedExams?: (exams: Exam[]) => Exam[];
   onExamClick?: (exam: Exam) => void;
+  onViewDetails?: (groupId: string) => void;
 }
 
 const statusStyles: Record<Exam["status"], { bg: string; badge: string; label: string; datePrefix: string }> = {
@@ -71,6 +72,7 @@ export function GroupCard({
   onViewConfiguracion,
   getSortedExams,
   onExamClick,
+  onViewDetails,
 }: GroupCardProps) {
   const isAlumno = variant === "alumno";
   const isDocente = variant === "docente";
@@ -82,29 +84,35 @@ export function GroupCard({
   };
 
   const handleDelete = () => {
-    onDelete?.(group.id);
+    onDelete?.(String(group.id));
   };
 
   const handleViewGroup = () => {
-    onViewGroup?.(group.id);
+    onViewGroup?.(String(group.id));
+  };
+
+  const handleViewDetails = () => {
+    onViewDetails?.(String(group.id));
   };
 
   const handleViewStudents = () => {
-    onViewStudents?.(group.id);
+    onViewStudents?.(String(group.id));
   };
 
   const handleViewEvaluaciones = () => {
-    onViewEvaluaciones?.(group.id);
+    onViewEvaluaciones?.(String(group.id));
   };
 
   const handleViewConfiguracion = () => {
-    onViewConfiguracion?.(group.id);
+    onViewConfiguracion?.(String(group.id));
   };
 
   const [expanded, setExpanded] = useState(false);
 
   const handleHeaderClick = () => {
     if (isAlumno) {
+      handleViewDetails();
+    } else {
       setExpanded(!expanded);
     }
   };
@@ -175,7 +183,7 @@ export function GroupCard({
                   </>
                 )}
                 {isAlumno && (
-                  <DropdownItem onClick={handleViewGroup}>
+                  <DropdownItem onClick={handleViewDetails}>
                     Ver detalles
                   </DropdownItem>
                 )}
@@ -217,103 +225,62 @@ export function GroupCard({
         </div>
       </div>
 
-      {/* Expanded Content */}
-      {expanded && (
+      {/* Expanded Content (Docente only) */}
+      {expanded && isDocente && (
         <div className="border-t border-[var(--color-border)] bg-[var(--color-background)] p-4 animate-fade-in">
-          {isDocente ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Link
-                href={`/docente/grupos/${group.id}/estudiantes`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[var(--color-success-bg)] flex items-center justify-center">
-                  <Users className="h-4 w-4 text-[var(--color-success)]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-[var(--color-text-primary)]">Estudiantes</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">{docenteGroup.estudiantes_count || 0} inscritos</p>
-                </div>
-              </Link>
-              <Link
-                href={`/docente/grupos/${group.id}/evaluaciones`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[var(--color-warning-bg)] flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-[var(--color-warning)]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-[var(--color-text-primary)]">Evaluaciones</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">{docenteGroup.evaluaciones_count || 0} creadas</p>
-                </div>
-              </Link>
-              <Link
-                href={`/docente/grupos/${group.id}/configuracion`}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center">
-                  <svg className="h-4 w-4 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-[var(--color-text-primary)]">Configuración</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">Ajustes del grupo</p>
-                </div>
-              </Link>
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[var(--color-danger-bg)] flex items-center justify-center">
-                  <Trash2 className="h-4 w-4 text-[var(--color-danger)]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-[var(--color-text-primary)]">Eliminar grupo</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">Acción irreversible</p>
-                </div>
-              </button>
-            </div>
-          ) : (
-            sortedExams.length === 0 ? (
-              <p className="font-normal text-sm leading-normal text-[var(--color-text-secondary)] pt-4">
-                No hay ninguna evaluación registrada.
-              </p>
-            ) : (
-              <div className="space-y-3 pt-4">
-                {sortedExams.map((exam) => {
-                  const styles = statusStyles[exam.status];
-                  const isClickable = onExamClick && (exam.status === "upcoming" || exam.status === "pending");
-                  return (
-                    <div
-                      key={exam.id}
-                      className={`rounded-lg p-4 ${styles.bg} border border-[var(--color-border)] ${isClickable ? "cursor-pointer hover:bg-opacity-90 transition-opacity" : ""}`}
-                      onClick={isClickable ? () => onExamClick?.(exam) : undefined}
-                      role={isClickable ? "button" : undefined}
-                      tabIndex={isClickable ? 0 : undefined}
-                      onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onExamClick?.(exam); } : undefined}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-base leading-normal text-[var(--color-text-primary)]">
-                            {exam.unit}
-                          </p>
-                          <p className="font-normal text-xs leading-normal text-[var(--color-text-secondary)] mt-0.5">
-                            {styles.datePrefix}{exam.date}{exam.time ? ` · ${exam.time}` : ""}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <span className={`inline-flex items-center justify-center px-3 h-7 rounded-full font-semibold text-xs leading-normal ${styles.badge}`}>
-                            {styles.label}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link
+              href={`/docente/grupos/${group.id}/estudiantes`}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-success-bg)] flex items-center justify-center">
+                <Users className="h-4 w-4 text-[var(--color-success)]" />
               </div>
-            )
-          )}
+              <div>
+                <p className="font-medium text-sm text-[var(--color-text-primary)]">Estudiantes</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{docenteGroup.estudiantes_count || 0} inscritos</p>
+              </div>
+            </Link>
+            <Link
+              href={`/docente/grupos/${group.id}/evaluaciones`}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-warning-bg)] flex items-center justify-center">
+                <FileText className="h-4 w-4 text-[var(--color-warning)]" />
+              </div>
+              <div>
+                <p className="font-medium text-sm text-[var(--color-text-primary)]">Evaluaciones</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{docenteGroup.evaluaciones_count || 0} creadas</p>
+              </div>
+            </Link>
+            <Link
+              href={`/docente/grupos/${group.id}/configuracion`}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center">
+                <svg className="h-4 w-4 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-[var(--color-text-primary)]">Configuración</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">Ajustes del grupo</p>
+              </div>
+            </Link>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[var(--color-border)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-bg)] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-danger-bg)] flex items-center justify-center">
+                <Trash2 className="h-4 w-4 text-[var(--color-danger)]" />
+              </div>
+              <div>
+                <p className="font-medium text-sm text-[var(--color-text-primary)]">Eliminar grupo</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">Acción irreversible</p>
+              </div>
+            </button>
+          </div>
         </div>
       )}
     </Card>

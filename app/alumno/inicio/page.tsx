@@ -9,6 +9,7 @@ import { GroupCard, type AlumnoGroup, type Exam } from "@/components/ui";
 import UpcomingExamCard from "../components/exams/UpcomingExamCard";
 import ExamsSidebar from "../components/exams/ExamsSidebar";
 import ExamConfirmModal from "../components/exams/ExamConfirmModal";
+import GroupDetailModal from "../components/exams/GroupDetailModal";
 import { useAlumnoGrupos, type AlumnoGrupo } from "@/lib/hooks/useAlumnoGrupos";
 
 interface User {
@@ -80,6 +81,8 @@ export default function AlumnoInicioPage() {
     tiempo_examen: number;
   } | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [showGroupDetailModal, setShowGroupDetailModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -176,6 +179,16 @@ export default function AlumnoInicioPage() {
       const message = err instanceof Error ? err.message : "Error desconocido";
       alert(message);
     }
+  };
+
+  const handleViewGroupDetail = (grupoId: string) => {
+    setSelectedGroupId(grupoId);
+    setShowGroupDetailModal(true);
+  };
+
+  const handleCloseGroupDetail = () => {
+    setShowGroupDetailModal(false);
+    setSelectedGroupId(null);
   };
 
   const groups = grupos.map(mapGrupoToAlumnoGroup);
@@ -317,6 +330,7 @@ export default function AlumnoInicioPage() {
                       variant="alumno"
                       getSortedExams={getSortedExams}
                       onExamClick={handleExamClick}
+                      onViewDetails={handleViewGroupDetail}
                     />
                   ))
                 )}
@@ -344,6 +358,12 @@ export default function AlumnoInicioPage() {
         }}
         exam={selectedExam!}
         onConfirm={handleConfirmExam}
+      />
+      <GroupDetailModal
+        isOpen={showGroupDetailModal}
+        onClose={handleCloseGroupDetail}
+        grupoId={selectedGroupId!}
+        onExamClick={handleExamClick}
       />
     </div>
   );
