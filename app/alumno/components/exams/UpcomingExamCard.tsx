@@ -144,16 +144,6 @@ export default function UpcomingExamCard({
             >
               Entrar a evaluación
             </Button>
-            {onViewDetails && (
-              <Button
-                onClick={onViewDetails}
-                variant="ghost"
-                className="flex-1 sm:w-auto text-[var(--color-text-primary)] hover:bg-[var(--color-background)] py-2.5 font-medium"
-                size="lg"
-              >
-                Ver detalles
-              </Button>
-            )}
           </div>
         </div>
       </div>

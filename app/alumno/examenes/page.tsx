@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { BaseHeader } from "@/components/ui";
 import GroupSelector from "../components/exams/GroupSelector";
 import SubjectHeader from "../components/exams/SubjectHeader";
 import ExamSection from "../components/exams/ExamSection";
-import {
-  type Exam,
-  getStatusStyles,
-  getSortedExams,
-} from "../components/exams/types";
+import ExamStartModal from "../components/exams/ExamStartModal";
+import ResultModal from "../components/exams/ResultModal";
 import { useAlumnoGrupos, type AlumnoGrupo } from "@/lib/hooks/useAlumnoGrupos";
+import { EvaluacionWithIntento } from "../components/exams/types";
 
 interface User {
   id: string;
@@ -33,30 +31,6 @@ interface ExamSummary {
   estado: 'programada' | 'publicada' | 'en_curso' | 'finalizada' | 'cancelada';
 }
 
-interface EvaluacionWithIntento {
-  id: string;
-  unit: string;
-  date: string;
-  time?: string;
-  status: "pending" | "cancelled" | "completed";
-  evaluacion: {
-    id: string;
-    titulo: string;
-    descripcion: string | null;
-    fecha_inicio: string;
-    fecha_fin: string;
-    estado: string;
-    tiempo_examen: number;
-    orden_aleatorio: boolean;
-  };
-  intento: {
-    id: string;
-    estado: string;
-    iniciado_en: string;
-    completado_en: string | null;
-  } | null;
-}
-
 const navigationLinks = [
   { href: "/alumno/inicio", label: "Inicio" },
   { href: "/alumno/examenes", label: "Exámenes", active: true },
@@ -65,12 +39,15 @@ const navigationLinks = [
 const years = [2026, 2025, 2024, 2023];
 
 export default function AlumnoExamenesPage() {
-  const { grupos, fetchGrupos } = useAlumnoGrupos();
+  const { grupos, fetchGrupos, loading: gruposLoading } = useAlumnoGrupos();
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionWithIntento[]>([]);
+  const [evaluacionesLoading, setEvaluacionesLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [selectedExam, setSelectedExam] = useState<EvaluacionWithIntento | null>(null);
+  const [selectedResult, setSelectedResult] = useState<EvaluacionWithIntento | null>(null);
   const router = useRouter();
   const initialFetchDone = useRef(false);
 
@@ -102,6 +79,7 @@ export default function AlumnoExamenesPage() {
   }, []);
 
   const fetchEvaluaciones = useCallback(async (grupoId: string) => {
+    setEvaluacionesLoading(true);
     try {
       const res = await fetch(`/api/alumno/grupos/${grupoId}/evaluaciones`);
       if (!res.ok) {
@@ -111,9 +89,14 @@ export default function AlumnoExamenesPage() {
       const data = await res.json();
       setEvaluaciones(data);
       setSelectedGroupId(grupoId);
+      setSelectedExam(null);
+      setSelectedResult(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error desconocido";
       console.error(message);
+      setEvaluaciones([]);
+    } finally {
+      setEvaluacionesLoading(false);
     }
   }, []);
 
@@ -124,20 +107,53 @@ export default function AlumnoExamenesPage() {
     }
   }, [grupos, selectedGroupId, fetchEvaluaciones]);
 
-  const toExam = (e: EvaluacionWithIntento): Exam => ({
-    id: Number(e.id) || 0,
-    unit: e.unit,
-    date: e.date,
-    time: e.time,
-    status: e.status,
-    subjectId: selectedGroupId ? Number(selectedGroupId) : 1,
-  });
+  const pendingExams = useMemo(
+    () => evaluaciones.filter((e) => e.status === "pending"),
+    [evaluaciones]
+  );
+  const cancelledExams = useMemo(
+    () => evaluaciones.filter((e) => e.status === "cancelled"),
+    [evaluaciones]
+  );
+  const completedExams = useMemo(
+    () => evaluaciones.filter((e) => e.status === "completed"),
+    [evaluaciones]
+  );
 
-  const pendingExams = evaluaciones.filter((e) => e.status === "pending").map(toExam);
-  const cancelledExams = evaluaciones.filter((e) => e.status === "cancelled").map(toExam);
-  const completedExams = evaluaciones.filter((e) => e.status === "completed").map(toExam);
+  const selectedGroup = useMemo(
+    () => grupos.find((g) => g.id === selectedGroupId),
+    [grupos, selectedGroupId]
+  );
 
-  const selectedGroup = grupos.find((g) => g.id === selectedGroupId);
+  const handleExamClick = (exam: EvaluacionWithIntento) => {
+    setSelectedExam(exam);
+  };
+
+  const handleStartExam = async (evaluacionId: string) => {
+    try {
+      const res = await fetch(`/api/alumno/examenes/${evaluacionId}/iniciar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.message || "Error al iniciar evaluación");
+        return;
+      }
+      setSelectedExam(null);
+      router.push(`/alumno/examenes/${evaluacionId}/rendir`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error desconocido";
+      alert(message);
+    }
+  };
+
+  const handleViewResult = (evaluacionId: string) => {
+    const exam = evaluaciones.find((e) => e.evaluacion.id === evaluacionId);
+    if (exam) {
+      setSelectedResult(exam);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -185,15 +201,18 @@ export default function AlumnoExamenesPage() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
         {/* Title */}
         <div className="mb-8">
           <h1 className="font-semibold text-4xl leading-relaxed text-[var(--color-text-primary)] tracking-tight">
             Mis Exámenes
           </h1>
+          <p className="font-normal text-base leading-relaxed text-[var(--color-text-secondary)] mt-1">
+            Consulta tus exámenes pendientes, en curso y realizados por grupo
+          </p>
         </div>
 
-        {/* Content Grid: Left panel (280px) + Right panel (flex-1) */}
+        {/* Content Grid: Left panel (288px) + Right panel (flex-1) */}
         <div className="flex gap-6">
           {/* Left Panel: Periodo & Grupos */}
           <GroupSelector
@@ -213,39 +232,78 @@ export default function AlumnoExamenesPage() {
                 id: Number(selectedGroup.id) || 1,
                 name: selectedGroup.nombre,
                 code: selectedGroup.codigo,
+                categoria: selectedGroup.categoria,
               } : undefined}
               completedCount={completedExams.length}
               pendingCount={pendingExams.length}
               cancelledCount={cancelledExams.length}
             />
 
-            {/* Exams Sections */}
-            <div className="space-y-6">
-              <ExamSection
-                title="Exámenes pendientes"
-                exams={pendingExams}
-                emptyMessage="No hay exámenes pendientes."
-                getStatusStyles={getStatusStyles}
-                getSortedExams={getSortedExams}
-              />
-              <ExamSection
-                title="Exámenes cancelados"
-                exams={cancelledExams}
-                emptyMessage="No hay exámenes cancelados."
-                getStatusStyles={getStatusStyles}
-                getSortedExams={getSortedExams}
-              />
-              <ExamSection
-                title="Exámenes realizados"
-                exams={completedExams}
-                emptyMessage="No hay exámenes realizados."
-                getStatusStyles={getStatusStyles}
-                getSortedExams={getSortedExams}
-              />
-            </div>
+            {evaluacionesLoading && (
+              <div className="space-y-3" role="status" aria-label="Cargando exámenes">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse bg-white border border-[#dedee8] rounded-xl p-5">
+                    <div className="h-5 bg-[#dedee8] rounded w-1/3 mb-3" />
+                    <div className="h-4 bg-[#dedee8] rounded w-1/2" />
+                    <div className="h-4 bg-[#dedee8] rounded w-1/4 mt-2" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!evaluacionesLoading && (
+              <div className="space-y-6">
+                <ExamSection
+                  title="Exámenes pendientes"
+                  exams={pendingExams}
+                  emptyMessage="No hay exámenes pendientes en este grupo."
+                  onExamClick={handleExamClick}
+                  onStartExam={handleStartExam}
+                  onViewResult={handleViewResult}
+                  showActions={true}
+                />
+                <ExamSection
+                  title="Exámenes realizados"
+                  exams={completedExams}
+                  emptyMessage="No hay exámenes realizados en este grupo."
+                  onExamClick={handleExamClick}
+                  onStartExam={handleStartExam}
+                  onViewResult={handleViewResult}
+                  showActions={true}
+                />
+                <ExamSection
+                  title="Exámenes cancelados"
+                  exams={cancelledExams}
+                  emptyMessage="No hay exámenes cancelados en este grupo."
+                  onExamClick={handleExamClick}
+                  onStartExam={handleStartExam}
+                  onViewResult={handleViewResult}
+                  showActions={false}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
+
+      {/* Modal Iniciar Evaluación */}
+      {selectedExam && (
+        <ExamStartModal
+          isOpen={true}
+          onClose={() => setSelectedExam(null)}
+          exam={selectedExam.evaluacion}
+          onStart={handleStartExam}
+        />
+      )}
+
+      {/* Modal Ver Resultado */}
+      {selectedResult && (
+        <ResultModal
+          isOpen={true}
+          onClose={() => setSelectedResult(null)}
+          exam={selectedResult}
+        />
+      )}
     </div>
   );
 }

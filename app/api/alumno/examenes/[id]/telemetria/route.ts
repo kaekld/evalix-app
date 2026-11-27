@@ -76,10 +76,32 @@ export async function POST(
       return NextResponse.json({ ok: true }); // Silenciosamente ignorar
     }
 
-    // Insertar incidentes en lote
-    const incidentes = eventos
-      .filter((e: any) => e && e.type)
-      .map((e: any) => ({
+    // Preparar datos para ambas tablas
+    const eventosValidos = eventos.filter((e: any) => e && e.type && e.pregunta_id);
+
+    if (eventosValidos.length > 0) {
+      // 1. Insertar en examen_telemetria (granular, por pregunta)
+      const telemetria = eventosValidos.map((e: any) => ({
+        intento_id: intento.id,
+        pregunta_id: e.pregunta_id,
+        evento_type: e.type,
+        severidad: severidadPorTipo[e.type] || 'media',
+        payload: {
+          timestamp: e.timestamp || new Date().toISOString(),
+          ...e.data,
+        },
+      }));
+
+      const { error: telemetriaError } = await supabase
+        .from('examen_telemetria')
+        .insert(telemetria);
+
+      if (telemetriaError) {
+        console.error('Error insertando telemetría:', telemetriaError);
+      }
+
+      // 2. Mantener examen_incidente para alertas/estado (backward compat)
+      const incidentes = eventosValidos.map((e: any) => ({
         intento_id: intento.id,
         tipo: e.type,
         severidad: severidadPorTipo[e.type] || 'media',
@@ -90,14 +112,12 @@ export async function POST(
         },
       }));
 
-    if (incidentes.length > 0) {
-      const { error: insertError } = await supabase
+      const { error: incidenteError } = await supabase
         .from('examen_incidente')
         .insert(incidentes);
 
-      if (insertError) {
-        console.error('Error insertando incidentes:', insertError);
-        // No fallar la request, solo log
+      if (incidenteError) {
+        console.error('Error insertando incidentes:', incidenteError);
       }
 
       // Si hay eventos críticos, marcar intento como incidencia
@@ -111,7 +131,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ ok: true, recibidos: incidentes.length });
+    return NextResponse.json({ ok: true, recibidos: eventosValidos.length });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     return NextResponse.json({ message }, { status: 500 });

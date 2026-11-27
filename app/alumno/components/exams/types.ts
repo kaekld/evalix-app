@@ -2,56 +2,36 @@ export interface Subject {
   id: number;
   name: string;
   code: string;
+  categoria?: string;
 }
 
-export interface Exam {
-  id: number;
+export interface Evaluacion {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: string;
+  tiempo_examen: number;
+  orden_aleatorio: boolean;
+}
+
+export interface Intento {
+  id: string;
+  estado: string;
+  iniciado_en: string;
+  completado_en: string | null;
+  finalizado_en?: string | null;
+}
+
+export interface EvaluacionWithIntento {
+  id: string;
   unit: string;
   date: string;
   time?: string;
   status: "pending" | "cancelled" | "completed";
-  subjectId: number;
+  evaluacion: Evaluacion;
+  intento: Intento | null;
 }
 
 export const years = [2026, 2025, 2024, 2023];
-
-export const getStatusStyles = (status: Exam["status"]) => {
-  switch (status) {
-    case "pending":
-      return {
-        bg: "bg-[#f0eafb]",
-        badgeBg: "bg-white",
-        badgeText: "text-[#6543ab]",
-        badgeLabel: "Pendiente",
-        datePrefix: "",
-      };
-    case "cancelled":
-      return {
-        bg: "bg-[#fef2f2]",
-        badgeBg: "bg-white",
-        badgeText: "text-[#cc3333]",
-        badgeLabel: "Cancelado",
-        datePrefix: "",
-      };
-    case "completed":
-      return {
-        bg: "bg-[#f6f6fa]",
-        badgeBg: "bg-[#e5f2e8]",
-        badgeText: "text-[#336647]",
-        badgeLabel: "Realizado",
-        datePrefix: "Evaluación realizada · ",
-      };
-  }
-};
-
-export const getSortedExams = (exams: Exam[]) => {
-  return [...exams].sort((a, b) => {
-    // Completed first, then pending, then cancelled
-    const statusOrder = { completed: 0, pending: 1, cancelled: 2 };
-    if (statusOrder[a.status] !== statusOrder[b.status]) {
-      return statusOrder[a.status] - statusOrder[b.status];
-    }
-    // For same status, most recent first
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
-  });
-};
