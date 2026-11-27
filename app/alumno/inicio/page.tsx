@@ -322,7 +322,7 @@ export default function AlumnoInicioPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                   {groups.map((group) => (
                     <GroupCard
                       key={group.id}

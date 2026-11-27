@@ -112,23 +112,23 @@ export function BaseHeader({
             </div>
           </div>
 
-          {/* Center: Tabs (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 lg:mx-auto" aria-label="Navegación principal" style={{ width: "fit-content" }}>
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-4 h-10 rounded-lg font-medium text-base leading-relaxed transition-colors flex items-center justify-center ${
-                  link.active ? colors.activeTab : colors.inactiveTab
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {/* Right: Navigation Tabs + Mi cuenta */}
+          <div className="flex items-center gap-4 lg:ml-auto">
+            {/* Navigation Tabs (Desktop) */}
+            <nav className="hidden lg:flex items-center gap-1" aria-label="Navegación principal" style={{ width: "fit-content" }}>
+              {navigationLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-4 h-10 rounded-lg font-medium text-base leading-relaxed transition-colors flex items-center justify-center ${
+                    link.active ? colors.activeTab : colors.inactiveTab
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-          {/* Right: Mobile menu button + Mi cuenta */}
-          <div className="flex items-center gap-2 lg:ml-auto">
             {/* Mobile menu trigger */}
             <button
               type="button"
